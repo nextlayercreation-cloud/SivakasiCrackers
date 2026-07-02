@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎆 Sivakasi Crackers — Full MERN-style App (React + Express)
 
 A complete **frontend + middleware** rebuild: React (Create React App) talks to
@@ -147,3 +148,6 @@ npm run build        # builds the React app into /build
 npm run server:prod   # serve the Express API (point your static host at /build separately,
                        # or add express.static('build') to server/index.js for a single-process deploy)
 ```
+=======
+# SivakasiCrackers
+>>>>>>> 9bcc999393b4d58345b13179ba6a2932d7a01f14
