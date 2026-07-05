@@ -230,7 +230,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
         <header className="site-header">
           <div className="logo-wrap" style={{cursor:'pointer'}} onClick={()=>navTo('home')}>
             <i className="ti ti-sparkles licon"/>
-            <div><div className="lname">Sivakasi <span>Crackers</span></div><div className="ltag">Premium Quality</div></div>
+            <div><div className="lname">Sri Murugan <span>Crackers</span></div><div className="ltag">Premium Quality</div></div>
           </div>
           <div className="search-wrap">
             <div className="search-inner">
@@ -321,7 +321,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <i className="ti ti-sparkles" style={{fontSize:22,color:'var(--gold)'}}/>
               <div>
-                <div style={{color:'var(--gold)',fontWeight:900,fontSize:15}}>Sivakasi Crackers</div>
+                <div style={{color:'var(--gold)',fontWeight:900,fontSize:15}}>Sri Murugan Crackers</div>
                 {user&&<div style={{color:'#cfd0e6',fontSize:11,marginTop:1}}>👤 {user.name}</div>}
               </div>
             </div>
@@ -375,8 +375,8 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(29,31,77,0.92),rgba(42,31,94,0.85),rgba(10,5,32,0.70))',zIndex:1}}/>
             <img src="/fireworks.jpg" alt="Fireworks" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)',zIndex:0}}/>
             <div className="hero-text" style={{position:'relative',zIndex:3,flex:'1 1 300px'}}>
-              <div className="ht1">{user?`Welcome, ${user.name}! 👋`:'Welcome to Sivakasi Crackers! 👋'}</div>
-              <div className="ht2">Sivakasi Crackers</div>
+              <div className="ht1">{user?`Welcome, ${user.name}! 👋`:'Welcome to Sri Murugan Crackers! 👋'}</div>
+              <div className="ht2">Sri Murugan Crackers</div>
               <div className="ht3">Premium fireworks delivered to your door</div>
               <span className="hero-badge">🎆 Festival Season Sale!</span>
               <div className="hero-stats">
@@ -552,7 +552,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div style={{background:'linear-gradient(135deg,var(--navy),#6b21a8)',borderRadius:16,padding:32,color:'#fff',marginBottom:24,textAlign:'center',position:'relative',overflow:'hidden'}}>
               <img src="/fireworks.jpg" alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:.2}}/>
               <div style={{position:'relative',zIndex:1}}>
-                <h1 style={{color:'var(--gold)',fontSize:28,marginBottom:8}}>🎆 About Sivakasi Crackers</h1>
+                <h1 style={{color:'var(--gold)',fontSize:28,marginBottom:8}}>🎆 About Sri Murugan Crackers</h1>
                 <p style={{color:'#d0d0ff',fontSize:14,lineHeight:1.7,maxWidth:600,margin:'0 auto'}}>We are a trusted name in the fireworks industry, bringing you the finest quality crackers from the cracker capital of India — Sivakasi, Tamil Nadu.</p>
               </div>
             </div>
@@ -588,7 +588,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:24,marginTop:16}}>
               <div style={{background:'#f8f8ff',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
                 <h4 style={{fontSize:15,fontWeight:700,color:'var(--navy)',marginBottom:14}}>Get in Touch</h4>
-                {[['ti-map-pin','No. 12, Cracker Street, Sivakasi, TN - 626123'],['ti-phone','+91 94444 55555'],['ti-mail','info@sivakasicracker.com'],['ti-clock','Mon–Sun: 8:00 AM – 8:00 PM'],['ti-brand-whatsapp','WhatsApp: +91 94444 55555']].map(([icon,text])=>(
+                {[['ti-map-pin','Address: 3/267 D, Raamji crackers shop,Chinnakamanpatti, sattur road, Sivakasi - 626123'],['ti-phone','+91  73976 35583 or +91 93426 35583'],['ti-mail','srimuruganmcrackers.sivakasi@gamil.com'],['ti-brand-whatsapp','WhatsApp: +91 73976 35583']].map(([icon,text])=>(
                   <div key={text} style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:12,fontSize:13}}>
                     <i className={`ti ${icon}`} style={{fontSize:20,color:'var(--gold)',flexShrink:0,marginTop:1}}/><span>{text}</span>
                   </div>
