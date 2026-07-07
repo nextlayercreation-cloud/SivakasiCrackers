@@ -378,6 +378,8 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
               <div className="ht1">{user?`Welcome, ${user.name}! 👋`:'Welcome to Sri Murugan Crackers! 👋'}</div>
               <div className="ht2">Sri Murugan Crackers</div>
               <div className="ht3">Premium fireworks delivered to your door</div>
+              <div className="ht1">Name : D.Raguram</div>
+              <div className="ht1">Mobile no : +91 7397635583 <br/>Or     +91 9342635583</div><br/>
               <span className="hero-badge">🎆 Festival Season Sale!</span>
               <div className="hero-stats">
                 <div><i className="ti ti-truck"/>Free delivery above ₹1000</div>
@@ -433,6 +435,34 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="products-section">
+            <div className="sec-head"><h3>🎁 Gift Boxes</h3></div>
+            {collections.giftbox.length===0
+              ?<div style={{textAlign:'center',padding:40,color:'var(--muted)'}}><div style={{fontSize:40,marginBottom:8}}>🎁</div><div>Gift boxes coming soon!</div></div>
+              :<div className="products-grid">{collections.giftbox.map(p=><ProductCard key={p.id} p={p}/>)}</div>}
+          </div>
+
+          <div className="products-section">
+            <div className="sec-head"><h3>📦 Combo Packs</h3></div>
+            {collections.combo.length===0
+              ?<div style={{textAlign:'center',padding:40,color:'var(--muted)'}}><div style={{fontSize:40,marginBottom:8}}>📦</div><div>Combo packs coming soon!</div></div>
+              :<div className="products-grid">{collections.combo.map(p=><ProductCard key={p.id} p={p}/>)}</div>}
+          </div>
+
+          <div className="products-section">
+              <div><h2 style={{fontSize:20,marginBottom:4}}>✨ New Arrivals</h2></div>
+            {collections.new_arrivals.length===0
+              ?<div style={{textAlign:'center',padding:40,color:'var(--muted)'}}><div style={{fontSize:40,marginBottom:8}}>✨</div><div>New arrivals coming soon!</div></div>
+              :<div className="products-grid">{collections.new_arrivals.map(p=><ProductCard key={p.id} p={p}/>)}</div>}
+          </div>
+
+          <div className="products-section">
+            <div className="sec-head"><h3>All Offers</h3></div>
+            {collections.offers.length===0
+              ?<div style={{textAlign:'center',padding:40,color:'var(--muted)'}}><div style={{fontSize:40,marginBottom:8}}>🏷️</div><div>Offers coming soon!</div></div>
+              :<div className="products-grid">{collections.offers.map(p=><ProductCard key={p.id} p={p}/>)}</div>}
           </div>
 
           <div style={{margin:'0 16px 24px',background:'linear-gradient(135deg,#1d1f4d,#6b21a8)',borderRadius:12,padding:24,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>

@@ -183,15 +183,15 @@ export default function CheckoutPage({ user, showToast }) {
                   <i className="ti ti-phone" style={{ fontSize:20,color:'var(--gold)' }} />
                   <div style={{ textAlign:'left' }}>
                     <div style={{ fontSize:11,color:'#aaa' }}>Call us</div>
-                    <div style={{ fontWeight:700,fontSize:15,color:'var(--gold)' }}>+91 98765 43210</div>
+                    <div style={{ fontWeight:700,fontSize:15,color:'var(--gold)' }}>+91 93426 35583</div>
                   </div>
                 </a>
-                <a href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi! I placed an order for ₹${total.toFixed(2)} on Sivakasi Crackers. Please confirm payment details.`)}`} target="_blank" rel="noopener noreferrer"
+                <a href={`https://wa.me/917397635583?text=${encodeURIComponent(`Hi! I placed an order for ₹${total.toFixed(2)} on Sri Murugan Crackers. Please provide payment details.`)}`} target="_blank" rel="noopener noreferrer"
                   style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,background:'#25D366',borderRadius:10,padding:'12px 16px',color:'#fff',textDecoration:'none',fontWeight:700 }}>
                   <i className="ti ti-brand-whatsapp" style={{ fontSize:22 }} />
                   <div style={{ textAlign:'left' }}>
                     <div style={{ fontSize:11,opacity:.85 }}>Chat on WhatsApp</div>
-                    <div style={{ fontSize:15 }}>+91 98765 43210</div>
+                    <div style={{ fontSize:15 }}>+91 73976 35583</div>
                   </div>
                 </a>
               </div>

@@ -2,9 +2,39 @@
  * src/api/orders.js
  * Firestore-backed order storage using the client SDK only.
  */
-import { collection, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, orderBy, query, runTransaction, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { createNotificationForOrderStatus } from './notifications';
+
+function aggregateOrderItems(items = []) {
+  return (items || []).reduce((acc, item) => {
+    const qty = Number(item?.qty) || 0;
+    if (!item?.productId || qty <= 0) return acc;
+    const key = String(item.productId);
+    acc[key] = (acc[key] || 0) + qty;
+    return acc;
+  }, {});
+}
+
+async function reduceStockForItems(items = []) {
+  const groupedItems = aggregateOrderItems(items);
+  const productIds = Object.keys(groupedItems);
+  if (!productIds.length) return;
+
+  await runTransaction(db, async (transaction) => {
+    for (const productId of productIds) {
+      const productRef = doc(db, 'products', productId);
+      const productSnap = await transaction.get(productRef);
+      if (!productSnap.exists()) continue;
+      const currentStock = Number(productSnap.data().stock || 0);
+      const nextStock = Math.max(0, currentStock - groupedItems[productId]);
+      transaction.update(productRef, {
+        stock: nextStock,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+  });
+}
 
 function mapOrder(docSnap) {
   const data = docSnap.data();
@@ -51,6 +81,9 @@ export const updateOrderStatus = async (orderId, status) => {
   };
   if (status === 'Shipped') {
     patch.orderShippedAt = now;
+  }
+  if (status === 'Shipped' && previousStatus !== 'Shipped') {
+    await reduceStockForItems(orderSnap.data().items || []);
   }
   await updateDoc(orderRef, patch);
   const nextSnap = await getDoc(orderRef);

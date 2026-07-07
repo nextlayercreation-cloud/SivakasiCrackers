@@ -15,10 +15,9 @@ let firebasePromise;
 async function getFirebaseServices() {
   if (!firebasePromise) {
     firebasePromise = (async () => {
-      const [{ initializeApp }, firestore, storage] = await Promise.all([
+      const [{ initializeApp }, firestore] = await Promise.all([
         import('firebase/app'),
         import('firebase/firestore'),
-        import('firebase/storage'),
       ]);
 
       const app = initializeApp(firebaseConfig);
@@ -26,7 +25,6 @@ async function getFirebaseServices() {
         app,
         db: firestore.getFirestore(app),
         firestore,
-        storage,
       };
     })().catch((err) => {
       firebasePromise = undefined;
@@ -41,17 +39,70 @@ async function saveDataUrlToAsset(dataUrl, folderName, filePrefix) {
   if (!dataUrl || typeof dataUrl !== 'string') return '';
   if (dataUrl.startsWith('/assets/')) return dataUrl;
 
-  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-  if (!match) return dataUrl;
-
-  const mimeType = match[1];
-  const base64 = match[2];
-  const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1].split('+')[0];
-  const fileName = `${filePrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
-  const publicDir = path.resolve(__dirname, '..', 'public', 'assets', folderName);
+  const publicDir = path.resolve(__dirname, 'assets', folderName);
   await fs.mkdir(publicDir, { recursive: true });
-  await fs.writeFile(path.join(publicDir, fileName), Buffer.from(base64, 'base64'));
-  return `/assets/${folderName}/${fileName}`;
+
+  const writeAssetFile = async (filePath, buffer) => {
+    await fs.writeFile(filePath, buffer);
+    const stat = await fs.stat(filePath);
+    if (!stat.isFile()) {
+      throw new Error(`Asset file was not written: ${filePath}`);
+    }
+  };
+
+  const fileNameFor = (extension) => `${filePrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+
+  // Handle data URLs (base64)
+  // Accept optional parameters like charset or name: data:image/png;charset=utf-8;base64,AAAA
+  const dataUrlRegex = /^data:(image\/[a-zA-Z0-9.+-]+)(?:;[^,]+)*;base64,(.+)$/i;
+  const match = dataUrl.match(dataUrlRegex);
+  if (match) {
+    const mimeType = match[1].toLowerCase();
+    const base64 = match[2];
+    const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1].split('+')[0];
+    const fileName = fileNameFor(extension);
+    const filePath = path.join(publicDir, fileName);
+    try {
+      await writeAssetFile(filePath, Buffer.from(base64, 'base64'));
+      console.log(`[assets] Wrote file ${filePath}`);
+      return `/assets/${folderName}/${fileName}`;
+    } catch (err) {
+      console.error('[assets] Failed to write base64 asset', err);
+      throw err;
+    }
+  }
+
+  // Handle absolute remote URLs (download and save locally)
+  if (/^https?:\/\//i.test(dataUrl)) {
+    try {
+      const fetchFn = (typeof fetch === 'function') ? fetch : (await import('node-fetch')).default;
+      const res = await fetchFn(dataUrl);
+      if (!res.ok) throw new Error(`Failed to download remote image: ${res.status} ${res.statusText}`);
+      const contentType = (res.headers && res.headers.get) ? res.headers.get('content-type') : res.headers['content-type'];
+      const buffer = Buffer.from(await res.arrayBuffer());
+      let extension = 'jpg';
+      if (contentType) {
+        const m = contentType.match(/image\/(png|jpeg|jpg|gif|webp)/i);
+        if (m) extension = m[1].toLowerCase() === 'jpeg' ? 'jpg' : m[1].toLowerCase();
+      } else {
+        const parts = dataUrl.split('?')[0].split('/');
+        const last = parts[parts.length - 1] || '';
+        const extMatch = last.match(/\.([a-z0-9]+)$/i);
+        if (extMatch) extension = extMatch[1];
+      }
+      const fileName = fileNameFor(extension);
+      const filePath = path.join(publicDir, fileName);
+      await writeAssetFile(filePath, buffer);
+      console.log(`[assets] Downloaded and wrote file ${filePath} from ${dataUrl}`);
+      return `/assets/${folderName}/${fileName}`;
+    } catch (err) {
+      console.error('[assets] Failed to download remote image', err);
+      throw err;
+    }
+  }
+
+  // Unknown format — return as-is
+  return dataUrl;
 }
 
 module.exports = {

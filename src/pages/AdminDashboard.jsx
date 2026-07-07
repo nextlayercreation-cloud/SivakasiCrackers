@@ -21,7 +21,7 @@ const TABS = [
   { id: 'expenses',  icon: 'ti-cash',            label: 'Expenses' },
   { id: 'income',    icon: 'ti-trending-up',     label: 'Income History' },
   { id: 'collections', icon: 'ti-gift',            label: 'Collections' },
-  { id: 'offers',    icon: 'ti-tag',             label: 'Manage Offers' },
+  // { id: 'offers',    icon: 'ti-tag',             label: 'Manage Offers' },
   { id: 'products',  icon: 'ti-tools',           label: 'Manage Products' },
 ];
 
@@ -29,6 +29,27 @@ const TABS = [
 // PRODUCT MODAL
 // ──────────────────────────────────────────────────────────────────────────────
 const DEFAULT_CATEGORIES = ['Rockets','Fountains','Flower Pots','Wheels','Bombettes'];
+
+const uploadProductImage = async (file, imageType = 'products') => {
+  if (!file) return '';
+  if (file.size > 2 * 1024 * 1024) throw new Error('Image must be under 2MB');
+
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('imageType', imageType);
+
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || 'Image upload failed');
+  }
+
+  return data.imageUrl || '';
+};
 
 function ProductModal({ product, onClose, onSave, showToast, customCategories, onAddCategory }) {
   const initDiscount = product && product.mrp > 0
@@ -41,6 +62,7 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
   );
   const [discount, setDiscount] = useState(String(initDiscount));
   const [customCats, setCustomCats] = useState(customCategories || []);
+  const [imageFile, setImageFile] = useState(null);
   const [newCat, setNewCat] = useState('');
   const [showNewCat, setShowNewCat] = useState(false);
   const allCategories = [...DEFAULT_CATEGORIES, ...customCats];
@@ -49,6 +71,10 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
   useEffect(() => {
     setCustomCats(customCategories || []);
   }, [customCategories]);
+
+  useEffect(() => {
+    setImageFile(null);
+  }, [product?.id]);
 
   // When MRP changes → recalculate sale price if discount is set
   const handleMrpChange = (val) => {
@@ -87,9 +113,8 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => set('image', ev.target.result);
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    e.target.value = '';
   };
 
   const addCustomCategory = () => {
@@ -105,10 +130,18 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
     showToast(`Category "${cat}" added!`);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.price || !form.mrp || !form.stock) { showToast('Fill all required fields'); return; }
-    onSave(form);
-    onClose();
+    try {
+      const payload = { ...form };
+      if (imageFile) {
+        payload.image = await uploadProductImage(imageFile, 'products');
+      }
+      await onSave(payload);
+      onClose();
+    } catch (err) {
+      showToast(err?.message || 'Image upload failed');
+    }
   };
 
   return (
@@ -284,7 +317,7 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
             <label style={{ cursor: 'pointer', display: 'block' }}>
               <div style={{ fontSize: 32, marginBottom: 6 }}>🖼️</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>Click to upload image (max 2MB)</div>
-              <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} style={{ display: 'none' }} />
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
               <span style={{ background: 'var(--gold)', color: '#1a0a00', padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, display:'inline-flex', alignItems:'center', gap:6 }}><i className="ti ti-camera" style={{fontSize:16}}/>Choose Image / Camera</span>
             </label>
           )}
@@ -574,13 +607,28 @@ export default function AdminDashboard({ onLogout, showToast }) {
     return !Object.keys(e).length;
   };
 
-  const handleCollImageUpload = (e) => {
+  const handleCollImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => setCollForm(p => ({ ...p, image: ev.target.result }));
-    reader.readAsDataURL(file);
+
+    try {
+      const uploadType = tab === 'offers'
+        ? 'offers'
+        : collTab === 'new_arrivals'
+          ? 'newarrivals'
+          : collTab === 'giftbox'
+            ? 'giftboxes'
+            : collTab === 'combo'
+              ? 'combos'
+              : 'products';
+      const imageUrl = await uploadProductImage(file, uploadType);
+      setCollForm(p => ({ ...p, image: imageUrl }));
+    } catch (err) {
+      showToast(err?.message || 'Could not upload image');
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const handleCollSave = async () => {
@@ -1546,22 +1594,20 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           id={`img-upload-${p.id}`}
                           type="file"
                           accept="image/*"
-                          capture="environment"
                           style={{ display:'none' }}
                           onChange={async (ev) => {
                             const file = ev.target.files[0];
                             if (!file) return;
-                            if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
-                            const reader = new FileReader();
-                            reader.onload = async (e) => {
-                              try {
-                                await updateProduct(p.id, { ...p, image: e.target.result });
-                                await reload();
-                                showToast('Image updated! ✅');
-                              } catch { showToast('Could not update image'); }
-                            };
-                            reader.readAsDataURL(file);
-                            ev.target.value = '';
+                            try {
+                              const imageUrl = await uploadProductImage(file, 'products');
+                              await updateProduct(p.id, { ...p, image: imageUrl });
+                              await reload();
+                              showToast('Image updated! ✅');
+                            } catch (err) {
+                              showToast(err?.message || 'Could not update image');
+                            } finally {
+                              ev.target.value = '';
+                            }
                           }}
                         />
                       </div>

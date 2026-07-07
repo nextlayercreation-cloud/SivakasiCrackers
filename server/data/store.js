@@ -402,9 +402,17 @@ async function writeCollection(type, items) {
 async function addToCollection(type, item) {
   if (!VALID_COLLECTION_TYPES.includes(type)) return null;
   const list = await getCollection(type);
-  const folder = type === 'new_arrivals' ? 'newarrivals' : type === 'offers' ? 'offers' : 'combos';
   const id = `col_${Date.now()}`;
-  const image = await saveDataUrlToAsset(item.image, folder, type === 'new_arrivals' ? 'newarrival' : type === 'offers' ? 'offer' : 'combo');
+  // Map collection type -> assets folder and file prefix consistently
+  let folder;
+  let prefix;
+  if (type === 'new_arrivals') { folder = 'newarrivals'; prefix = 'newarrival'; }
+  else if (type === 'offers') { folder = 'offers'; prefix = 'offer'; }
+  else if (type === 'combo') { folder = 'combos'; prefix = 'combo'; }
+  else if (type === 'giftbox') { folder = 'giftboxes'; prefix = 'giftbox'; }
+  else { folder = 'products'; prefix = 'asset'; }
+
+  const image = await saveDataUrlToAsset(item.image, folder, prefix);
   const discount = item.mrp && item.price ? Math.round(((parseNumber(item.mrp) - parseNumber(item.price)) / parseNumber(item.mrp)) * 100) : parseNumber(item.discount, 0);
   const record = {
     id,
@@ -428,9 +436,17 @@ async function updateInCollection(type, id, item) {
   const list = await getCollection(type);
   const idx = list.findIndex((entry) => String(entry.id) === String(id));
   if (idx === -1) return null;
-  const folder = type === 'new_arrivals' ? 'newarrivals' : type === 'offers' ? 'offers' : 'combos';
   const current = list[idx];
-  const image = item.image ? await saveDataUrlToAsset(item.image, folder, type === 'new_arrivals' ? 'newarrival' : type === 'offers' ? 'offer' : 'combo') : current.image || '';
+  // Map collection type -> assets folder and file prefix consistently
+  let folder;
+  let prefix;
+  if (type === 'new_arrivals') { folder = 'newarrivals'; prefix = 'newarrival'; }
+  else if (type === 'offers') { folder = 'offers'; prefix = 'offer'; }
+  else if (type === 'combo') { folder = 'combos'; prefix = 'combo'; }
+  else if (type === 'giftbox') { folder = 'giftboxes'; prefix = 'giftbox'; }
+  else { folder = 'products'; prefix = 'asset'; }
+
+  const image = item.image ? await saveDataUrlToAsset(item.image, folder, prefix) : current.image || '';
   const mrp = parseNumber(item.mrp || current.mrp || item.price || current.price);
   const price = item.mrp && item.discount
     ? mrp * (1 - parseNumber(item.discount) / 100)
