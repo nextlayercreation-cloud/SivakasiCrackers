@@ -230,7 +230,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
         <header className="site-header">
           <div className="logo-wrap" style={{cursor:'pointer'}} onClick={()=>navTo('home')}>
             <i className="ti ti-sparkles licon"/>
-            <div><div className="lname">Sri Murugan <span>Crackers</span></div><div className="ltag">Premium Quality</div></div>
+            <div><h1><div className="lname">Sri Murugan <span>Crackers</span></div></h1><div className="ltag">Premium Quality</div></div>
           </div>
           <div className="search-wrap">
             <div className="search-inner">
@@ -376,7 +376,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <img src="/fireworks.jpg" alt="Fireworks" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)',zIndex:0}}/>
             <div className="hero-text" style={{position:'relative',zIndex:3,flex:'1 1 300px'}}>
               <div className="ht1">{user?`Welcome, ${user.name}! 👋`:'Welcome to Sri Murugan Crackers! 👋'}</div>
-              <div className="ht2">Sri Murugan Crackers</div>
+              <h1 className="ht2">Sri Murugan Crackers</h1>
               <div className="ht3">Premium fireworks delivered to your door</div>
               <div className="ht1">Name : D.Raguram</div>
               <div className="ht1">Mobile no : +91 7397635583 <br/>Or     +91 9342635583</div><br/>
