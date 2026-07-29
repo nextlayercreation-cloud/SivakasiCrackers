@@ -8,6 +8,7 @@ import { getIncomes, addIncome as addIncomeAPI, deleteIncome } from '../api/inco
 import { getCollection, addToCollection, updateInCollection, deleteFromCollection } from '../api/collections';
 import { getExtraCategories, saveExtraCategories } from '../api/ui';
 import SelectableSearch from '../components/SelectableSearch';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // SIDEBAR TABS
@@ -38,7 +39,7 @@ const uploadProductImage = async (file, imageType = 'products') => {
   formData.append('image', file);
   formData.append('imageType', imageType);
 
-  const response = await fetch('/api/upload', {
+  const response = await fetch(`${API_BASE_URL}/api/upload`, {
     method: 'POST',
     body: formData,
   });
