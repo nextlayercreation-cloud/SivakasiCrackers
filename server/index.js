@@ -30,7 +30,6 @@ const expensesRouter = require('./routes/expenses');
 const incomesRouter = require('./routes/incomes');
 const collectionsRouter = require('./routes/collections');
 const uiRouter = require('./routes/ui');
-const API_BASE_URL = process.env.API_BASE_URL || '';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -68,11 +67,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get(`${API_BASE_URL}/api/health`, (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Sivakasi Crackers API is running' });
 });
 
-app.post(`${API_BASE_URL}/api/upload`, (req, res, next) => {
+app.post('/api/upload', (req, res, next) => {
   upload.single('image')(req, res, async (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -97,18 +96,18 @@ app.post(`${API_BASE_URL}/api/upload`, (req, res, next) => {
   });
 });
 
-app.use(`${API_BASE_URL}/api/products`, productsRouter);
-app.use(`${API_BASE_URL}/api/orders`, ordersRouter);
-app.use(`${API_BASE_URL}/api/bills`, billsRouter);
-app.use(`${API_BASE_URL}/api/auth`, authRouter);
-app.use(`${API_BASE_URL}/api/notifications`, notificationsRouter);
-app.use(`${API_BASE_URL}/api/expenses`, expensesRouter);
-app.use(`${API_BASE_URL}/api/incomes`, incomesRouter);
-app.use(`${API_BASE_URL}/api/collections`, collectionsRouter);
-app.use(`${API_BASE_URL}/api/ui`, uiRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/orders', ordersRouter);
+app.use('/api/bills', billsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/expenses', expensesRouter);
+app.use('/api/incomes', incomesRouter);
+app.use('/api/collections', collectionsRouter);
+app.use('/api/ui', uiRouter);
 
 // 404 handler
-app.use(`${API_BASE_URL}/api`, (req, res) => {
+app.use('/api', (req, res) => {
   res.status(404).json({ message: 'API route not found' });
 });
 
