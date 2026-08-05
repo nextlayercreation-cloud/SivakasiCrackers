@@ -59,7 +59,8 @@ export default function CheckoutPage({ user, showToast }) {
   }).filter(Boolean);
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.cartQty, 0);
-  const delivery = subtotal >= 1000 ? 0 : 80;
+  // const delivery = subtotal >= 1000 ? 0 : 80;
+  const delivery = 0;
   const total = subtotal + delivery;
 
   const validate = () => {
@@ -224,8 +225,8 @@ export default function CheckoutPage({ user, showToast }) {
               ))}
               <div className="price-breakdown" style={{ marginTop:'14px' }}>
                 <div className="pb-row"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
-                <div className="pb-row"><span>Delivery</span><span>{delivery === 0 ? '🎉 FREE' : `₹${delivery}`}</span></div>
-                {delivery > 0 && <div style={{ fontSize:'11px',color:'var(--muted)',textAlign:'right' }}>Add ₹{(1000 - subtotal).toFixed(0)} for free delivery</div>}
+                {/* <div className="pb-row"><span>Delivery</span><span>{delivery === 0 ? '🎉 FREE' : `₹${delivery}`}</span></div> */}
+                {/* {delivery > 0 && <div style={{ fontSize:'11px',color:'var(--muted)',textAlign:'right' }}>Add ₹{(1000 - subtotal).toFixed(0)} for free delivery</div>} */}
                 <div className="pb-row pb-total"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
               </div>
             </div>

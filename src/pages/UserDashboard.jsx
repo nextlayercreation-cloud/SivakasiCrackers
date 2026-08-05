@@ -382,7 +382,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
               <div className="ht1 ht5">Mobile no : +91 7397635583 <br/>Or     +91 9342635583</div><br/>
               <span className="hero-badge">🎆 Festival Season Sale!</span>
               <div className="hero-stats">
-                <div><i className="ti ti-truck"/>Free delivery above ₹1000</div>
+                {/* <div><i className="ti ti-truck"/>Free delivery above ₹1000</div> */}
                 <div><i className="ti ti-shield-check"/>100% Genuine products</div>
                 <div><i className="ti ti-star"/>4.9★ Rating</div>
               </div>
@@ -618,7 +618,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:24,marginTop:16}}>
               <div style={{background:'#f8f8ff',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
                 <h4 style={{fontSize:15,fontWeight:700,color:'var(--navy)',marginBottom:14}}>Get in Touch</h4>
-                {[['ti-map-pin','Address: 3/267 D, Raamji crackers shop,Chinnakamanpatti, sattur road, Sivakasi - 626123'],['ti-phone','+91  73976 35583 or +91 93426 35583'],['ti-mail','srimuruganmcrackers.sivakasi@gamil.com'],['ti-brand-whatsapp','WhatsApp: +91 73976 35583']].map(([icon,text])=>(
+                {[['ti-map-pin','Address: 3/267 D, Raamji crackers shop,Chinnakamanpatti, sattur road, Sivakasi - 626123'],['ti-phone','Call: +91  73976 35583 or +91 93426 35583 '],['ti-mail','srimuruganmcrackers.sivakasi@gamil.com'],['ti-brand-whatsapp','WhatsApp: +91  73976 35583 or +91 93426 35583']].map(([icon,text])=>(
                   <div key={text} style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:12,fontSize:13}}>
                     <i className={`ti ${icon}`} style={{fontSize:20,color:'var(--gold)',flexShrink:0,marginTop:1}}/><span>{text}</span>
                   </div>
@@ -705,10 +705,11 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div className="cart-footer">
               <div style={{fontSize:12,color:'var(--muted)',marginBottom:8,padding:8,background:'#f8f8ff',borderRadius:6}}>
                 <div style={{display:'flex',justifyContent:'space-between'}}><span>Subtotal</span><span>₹{cartTotal().toFixed(0)}</span></div>
-                <div style={{display:'flex',justifyContent:'space-between'}}><span>Shipping</span><span>{shipping()===0?'🎉 FREE':'₹'+shipping()}</span></div>
-                {shipping()>0&&<div style={{fontSize:10,color:'#10b981',marginTop:3}}>Add ₹{1000-cartTotal()} more for free shipping!</div>}
+                {/* <div style={{display:'flex',justifyContent:'space-between'}}><span>Shipping</span><span>{shipping()===0?'🎉 FREE':'₹'+shipping()}</span></div> */}
+                {/* {shipping()>0&&<div style={{fontSize:10,color:'#10b981',marginTop:3}}>Add ₹{1000-cartTotal()} more for free shipping!</div>} */}
               </div>
-              <div className="cart-total"><span>Total:</span><span>₹{(cartTotal()+shipping()).toFixed(0)}</span></div>
+              {/* <div className="cart-total"><span>Total:</span><span>₹{(cartTotal()+shipping()).toFixed(0)}</span></div> */}
+              <div className="cart-total"><span>Total:</span><span>₹{(cartTotal()).toFixed(0)}</span></div>
               <button type="button" className="checkout-btn" onClick={()=>{closeCart();if(!user){navigate('/login',{state:{from:'/checkout'}});showToast('Login to place your order 🔐');}else{navigate('/checkout');}}}>
                 Proceed to Checkout →
               </button>

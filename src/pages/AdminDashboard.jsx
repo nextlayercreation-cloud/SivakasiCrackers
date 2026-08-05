@@ -8,6 +8,8 @@ import { getIncomes, addIncome as addIncomeAPI, deleteIncome } from '../api/inco
 import { getCollection, addToCollection, updateInCollection, deleteFromCollection } from '../api/collections';
 import { getExtraCategories, saveExtraCategories } from '../api/ui';
 import SelectableSearch from '../components/SelectableSearch';
+import { storage } from '../firebase';
+import {ref,  uploadBytes,  getDownloadURL} from 'firebase/storage';
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -30,26 +32,25 @@ const TABS = [
 // PRODUCT MODAL
 // ──────────────────────────────────────────────────────────────────────────────
 const DEFAULT_CATEGORIES = ['Rockets','Fountains','Flower Pots','Wheels','Bombettes'];
-
-const uploadProductImage = async (file, imageType = 'products') => {
+ 
+const uploadProductImage = async (file) => {
   if (!file) return '';
-  if (file.size > 2 * 1024 * 1024) throw new Error('Image must be under 2MB');
 
-  const formData = new FormData();
-  formData.append('image', file);
-  formData.append('imageType', imageType);
-
-  const response = await fetch(`${API_BASE_URL}/api/upload`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'Image upload failed');
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error('Image must be under 2MB');
   }
 
-  return data.imageUrl || '';
+  const fileName =
+    `products/${Date.now()}_${file.name}`;
+
+  const imageRef = ref(storage, fileName);
+
+  await uploadBytes(imageRef, file);
+
+  const imageUrl =
+    await getDownloadURL(imageRef);
+
+  return imageUrl;
 };
 
 function ProductModal({ product, onClose, onSave, showToast, customCategories, onAddCategory }) {
@@ -376,7 +377,7 @@ function BillPreview({ bill, onClose }) {
                 <tr key={i}>
                   <td>{i + 1}</td>
                   <td>{item.name}</td>
-                  <td style={{ textAlign:'center' }}>{item.qty}</td>
+                  <td style={{ textAlign:'left' }}>{item.qty}</td>
                   <td>₹{item.mrp || item.price}</td>
                   <td>₹{((item.mrp || item.price) * item.qty).toFixed(2)}</td>
                 </tr>
@@ -441,7 +442,7 @@ function OrderPreview({ order, onClose }) {
                 <tr key={`${item.productId || item.name}-${index}`}>
                   <td>{index + 1}</td>
                   <td>{item.name}</td>
-                  <td style={{ textAlign:'center' }}>{item.qty}</td>
+                  <td style={{ textAlign:'left' }}>{item.qty}</td>
                   <td>₹{Number(item.price || 0).toFixed(2)}</td>
                   <td>₹{Number(item.lineTotal ?? (Number(item.price || 0) * item.qty)).toFixed(2)}</td>
                 </tr>
