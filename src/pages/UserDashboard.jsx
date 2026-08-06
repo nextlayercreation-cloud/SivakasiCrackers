@@ -5,6 +5,7 @@ import { getCollection } from '../api/collections';
 import { getOrders } from '../api/orders';
 import { getNotificationsForUser, markAllNotificationsRead } from '../api/notifications';
 import FireworksCanvas from '../components/FireworksCanvas';
+import Logo from '../components/Logo';
 
 const CART_COOKIE = 'sc_cart';
 
@@ -380,7 +381,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
               <div className="ht3">Premium fireworks delivered to your door</div>
               <div className="ht1 ht5">Name : D.Raguram</div>
               <div className="ht1 ht5">Mobile no : +91 7397635583 <br/>Or     +91 9342635583</div><br/>
-              <span className="hero-badge">🎆 Festival Season Sale!</span>
+              <div className="brand hero-badge">  <Logo size={40} />  <span>Festival Season Sale!</span></div>
               <div className="hero-stats">
                 {/* <div><i className="ti ti-truck"/>Free delivery above ₹1000</div> */}
                 <div><i className="ti ti-shield-check"/>100% Genuine products</div>
@@ -467,7 +468,10 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
 
           <div style={{margin:'0 16px 24px',background:'linear-gradient(135deg,#1d1f4d,#6b21a8)',borderRadius:12,padding:24,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
             <div>
-              <h2 style={{color:'var(--gold)',fontSize:20,marginBottom:6}}>🎆 Diwali Mega Sale!</h2>
+              <div className="brand">
+                <Logo size={40} />
+                <h2 style={{color:'var(--gold)',fontSize:20,marginBottom:6}}>Diwali Mega Sale! - Grab your deals now!</h2>
+              </div>
               <p style={{color:'#d0d0ff',fontSize:13}}>Limited time offers — grab before they're gone!</p>
               <button onClick={()=>navTo('offers')} style={{marginTop:10,background:'var(--gold)',color:'var(--gold-dark)',border:'none',padding:'9px 20px',borderRadius:8,fontWeight:700,fontSize:13}}>Shop Offers →</button>
             </div>
@@ -537,7 +541,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
         {section==='offers'&&(
           <div className="products-section">
             <div style={{background:'linear-gradient(135deg,#1d1f4d,#6b21a8)',borderRadius:12,padding:24,marginBottom:20,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
-              <div><h2 style={{color:'var(--gold)',fontSize:22,marginBottom:6}}>🎆 Diwali Mega Sale!</h2><p style={{color:'#d0d0ff',fontSize:14}}>Limited time offers — grab before they're gone!</p></div>
+              <div><div className="brand">  <Logo size={40} />  <h2 style={{color:'var(--gold)',fontSize:20,marginBottom:4}}>Diwali Mega Sale!</h2></div><p style={{color:'#d0d0ff',fontSize:14}}>Limited time offers — grab before they're gone!</p></div>
               <div style={{background:'var(--pink)',color:'#fff',fontSize:26,fontWeight:900,padding:'16px 22px',borderRadius:12,textAlign:'center'}}>UP TO<br/>50% OFF</div>
             </div>
             <div className="sec-head"><h3>All Offers</h3></div>
@@ -582,7 +586,10 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <div style={{background:'linear-gradient(135deg,var(--navy),#6b21a8)',borderRadius:16,padding:32,color:'#fff',marginBottom:24,textAlign:'center',position:'relative',overflow:'hidden'}}>
               <img src="/fireworks.jpg" alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:.2}}/>
               <div style={{position:'relative',zIndex:1}}>
-                <h1 style={{color:'var(--gold)',fontSize:28,marginBottom:8}}>🎆 About Sri Murugan Crackers</h1>
+                <div className="brand">
+                  <Logo size={40} />
+                  <h2>About Sri Murugan Crackers</h2>
+                </div>
                 <p style={{color:'#d0d0ff',fontSize:14,lineHeight:1.7,maxWidth:600,margin:'0 auto'}}>We are a trusted name in the fireworks industry, bringing you the finest quality crackers from the cracker capital of India — Sivakasi, Tamil Nadu.</p>
               </div>
             </div>

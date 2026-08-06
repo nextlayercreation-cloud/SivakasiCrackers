@@ -10,6 +10,7 @@ import OrderSuccessPage from './pages/OrderSuccessPage';
 import FireworksCanvas from './components/FireworksCanvas';
 import { registerUser, loginUser, loginAdmin } from './api/auth';
 import './styles/index.css';
+import Logo from './components/Logo';
 
 /* ═══════════════════════════════════════════════════════════════
    SMART LOGIN PAGE
@@ -162,10 +163,12 @@ function LoginPage({ onLogin, showToast }) {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <div style={{ fontSize: 44, marginBottom: 4 }}>🎆</div>
-          <h2 style={{ color: '#FAC775', margin: '0 0 3px', fontSize: 22, fontWeight: 900 }}>
-            Sivakasi Crackers
-          </h2>
+          <div className="brand">
+            <Logo size={40} />
+            <h2 style={{ color: '#FAC775', margin: '0 0 3px', fontSize: 22, fontWeight: 900 }}>
+              Sri Murugan Crackers
+            </h2>
+          </div>
           <p style={{ color: '#cfd0e6', fontSize: 12, margin: 0 }}>
             {mode === 'login' ? 'Login to continue' : 'Create your account'}
           </p>
@@ -232,7 +235,7 @@ function LoginPage({ onLogin, showToast }) {
                 onClick={() => navigate('/')}
                 style={{ fontSize: 12, color: '#888', cursor: 'pointer', textDecoration: 'underline' }}
               >
-                ← Browse without login
+                Browse without login
               </span>
             </div>
           </form>
@@ -286,7 +289,7 @@ function LoginPage({ onLogin, showToast }) {
             {errors.password && <div style={S.err}>{errors.password}</div>}
 
             <button style={S.btn(loading)} type="submit" disabled={loading}>
-              {loading ? 'Creating...' : '✅ Create Account →'}
+              {loading ? 'Creating...' : ' Create Account '}
             </button>
 
             <div style={S.switchRow}>

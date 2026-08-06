@@ -57,8 +57,8 @@ const ALLOWED_IMAGE_TYPES = ['products', 'combos', 'giftboxes', 'offers', 'newar
 // });
 
 app.use(cors());
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 // app.use('/assets', express.static(ASSETS_ROOT));
 
 // Simple request logger middleware
@@ -116,6 +116,8 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ message: 'Internal server error' });
 });
+
+app.use('/api/settings',require('./routes/settings'));
 
 app.listen(PORT, () => {
   // console.log(`🎆 Sivakasi Crackers API running on http://https://sivakasicrackersapi.onrender.com`);

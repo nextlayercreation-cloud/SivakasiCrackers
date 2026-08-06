@@ -10,6 +10,7 @@ import { getExtraCategories, saveExtraCategories } from '../api/ui';
 import SelectableSearch from '../components/SelectableSearch';
 import { storage } from '../firebase';
 import {ref,  uploadBytes,  getDownloadURL} from 'firebase/storage';
+import Logo from '../components/Logo';
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -36,9 +37,9 @@ const DEFAULT_CATEGORIES = ['Rockets','Fountains','Flower Pots','Wheels','Bombet
 const uploadProductImage = async (file) => {
   if (!file) return '';
 
-  if (file.size > 2 * 1024 * 1024) {
-    throw new Error('Image must be under 2MB');
-  }
+  // if (file.size > 2 * 1024 * 1024) {
+  //   throw new Error('Image must be under 2MB');
+  // }
 
   const fileName =
     `products/${Date.now()}_${file.name}`;
@@ -114,7 +115,7 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
+    // if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
     setImageFile(file);
     e.target.value = '';
   };
@@ -356,7 +357,10 @@ function BillPreview({ bill, onClose }) {
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
         <div className="bill-print">
           <div className="bp-header">
-            <h2>🎆 Sivakasi Crackers</h2>
+            <div className="brand">
+              <Logo size={40} />
+              <h2>Sri Murugan Crackers</h2>
+            </div>
             <p>Premium Quality Fireworks | Sivakasi, Tamil Nadu</p>
             <p style={{ marginTop: '6px', fontSize: '11px' }}>
               Bill No: <strong>{bill.id}</strong> &nbsp;|&nbsp; Date: {new Date(bill.createdAt).toLocaleDateString('en-IN')}
@@ -396,6 +400,18 @@ function BillPreview({ bill, onClose }) {
                   <span>− ₹{(bill.discountAmt || 0).toFixed(2)}</span>
                 </div>
               )}
+              {bill.taxPct > 0 && (
+                <div style={{ display:'flex', justifyContent:'space-between', color:'#16a34a', fontWeight:700 }}>
+                  <span>GST ({bill.taxPct}%)</span>
+                  <span>+ ₹{(bill.tax || 0).toFixed(2)}</span>
+                </div>
+              )}
+              {bill.taxableAmount !== undefined && (
+                <div style={{ display:'flex', justifyContent:'space-between', color:'#555', fontWeight:600 }}>
+                  <span>Taxable Amount</span>
+                  <span>₹{Number(bill.taxableAmount).toFixed(2)}</span>
+                </div>
+              )}
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
               <span>Grand Total</span>
@@ -419,7 +435,10 @@ function OrderPreview({ order, onClose }) {
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
         <div className="bill-print">
           <div className="bp-header">
-            <h2>🎆 Sivakasi Crackers</h2>
+            <div className="brand">
+              <Logo size={40} />
+              <h2>Sri Murugan Crackers</h2>
+            </div>
             <p>Order Details</p>
             <p style={{ marginTop: '6px', fontSize: '11px' }}>
               Order No: <strong>{order.id}</strong> &nbsp;|&nbsp; Date: {new Date(order.createdAt).toLocaleDateString('en-IN')}
@@ -458,6 +477,14 @@ function OrderPreview({ order, onClose }) {
               <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>Delivery</span>
                 <span>₹{Number(order.delivery || 0).toFixed(2)}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>Tax</span>
+                <span>₹{Number(order.taxPct || 0).toFixed(2)}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>Discount</span>
+                <span>− ₹{Number(order.discountAmt || 0).toFixed(2)}</span>
               </div>
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
@@ -510,6 +537,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
   const [billCustomer, setBillCustomer] = useState({ name: '', phone: '', address: '' });
   const [billErrors, setBillErrors] = useState({});
   const [billDiscount, setBillDiscount] = useState(0);
+  const [billGST, setBillGST] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -525,6 +553,9 @@ export default function AdminDashboard({ onLogout, showToast }) {
       setIncomes(inc);
       setCollections({ giftbox: gb, combo: cb, new_arrivals: na, offers: of });
       setCustomCategories(cats);
+      const gstRes = await fetch(`${API_BASE_URL}/api/settings/gst`);
+      const gstData = await gstRes.json();
+      setBillGST(gstData.gstPercentage);
     } catch (err) {
       showToast('Could not load data from server');
     } finally {
@@ -626,7 +657,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
   const handleCollImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
+    // if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
 
     try {
       const uploadType = tab === 'offers'
@@ -781,8 +812,10 @@ export default function AdminDashboard({ onLogout, showToast }) {
       if (p) mrpTotal += (p.mrp || p.price) * item.qty;
     });
     const discountAmt = mrpTotal * (billDiscount / 100);
-    const total = mrpTotal - discountAmt;
-    return { mrpTotal, discountAmt, total };
+    const taxableAmount = mrpTotal - discountAmt;
+    const gstAmt = taxableAmount * (billGST / 100);
+    const total = taxableAmount + gstAmt;
+    return { mrpTotal, discountAmt, taxableAmount, gstAmt, total };
   };
 
   const addBillItem = () => setBillItems(p => [...p, { productId: '', qty: 1 }]);
@@ -810,7 +843,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
       if (item.qty > p.stock) { showToast(`Insufficient stock for ${item.name}`); return; }
     }
 
-    const { mrpTotal, discountAmt, total } = billCalc();
+    const { mrpTotal, discountAmt, taxableAmount, gstAmt, total } = billCalc();
 
     try {
       const bill = await createBill({
@@ -818,7 +851,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
         customerPhone: billCustomer.phone,
         customerAddress: billCustomer.address,
         items: itemsWithDetails,
-        subtotal: mrpTotal, mrpTotal, discountPct: billDiscount, discountAmt, tax: 0, taxPct: 0, total
+        subtotal: mrpTotal, mrpTotal, discountPct: billDiscount, discountAmt, tax: gstAmt, taxPct: billGST,taxableAmount, total
       });
 
       setBillPreview(bill);
@@ -852,7 +885,10 @@ export default function AdminDashboard({ onLogout, showToast }) {
       {/* SIDEBAR */}
       <aside className={`admin-sidebar${sidebarOpen ? ' sb-open' : ''}`}>
         <div className="sb-logo">
-          <span>🎆 Sivakasi Crackers</span>
+          <div className="brand">
+            <Logo size={40} />
+            <span>Sri Murugan Crackers</span>
+          </div>
           <small>Admin Panel</small>
         </div>
         <nav>
@@ -1178,17 +1214,6 @@ export default function AdminDashboard({ onLogout, showToast }) {
                 <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12, flexWrap:'wrap' }}>
                   <label style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>Discount %:</label>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    {/* {[0,5,10,15,20,25].map(d => (
-                      <button key={d} type="button"
-                        onClick={() => setBillDiscount(d)}
-                        style={{
-                          padding:'5px 11px', borderRadius:7, fontSize:12, fontWeight:700, cursor:'pointer',
-                          border: billDiscount===d ? '2px solid var(--navy)' : '1px solid var(--border)',
-                          background: billDiscount===d ? 'var(--navy)' : '#fff',
-                          color: billDiscount===d ? 'var(--gold)' : 'var(--muted)',
-                        }}
-                      >{d}%</button>
-                    ))} */}
                     <div style={{ display:'flex', alignItems:'center', border:'1px solid var(--border)', borderRadius:7, overflow:'hidden' }}>
                       <input type="number" min={0} max={99}
                         value={billDiscount}
@@ -1201,8 +1226,23 @@ export default function AdminDashboard({ onLogout, showToast }) {
                   </div>
                 </div>
 
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12, flexWrap:'wrap' }}>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>GST %</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ display:'flex', alignItems:'center', border:'1px solid var(--border)', borderRadius:7, overflow:'hidden' }}>  
+                      <input type="number" min={0} max={99} value={billGST} 
+                      style={{ height: 50, width:60, padding:'5px 8px', border:'none', fontSize:13, textAlign:'center' }}
+                      onChange={async (e) => {const value = Number(e.target.value);
+                      setBillGST(value);
+                      await fetch(`${API_BASE_URL}/api/settings/gst`,{method: 'PUT',headers: {'Content-Type':'application/json'},body: JSON.stringify({gstPercentage: value})});
+                        }}/>
+                       <span style={{ padding:'0 8px', color:'var(--muted)', fontSize:12, background:'#f8f8ff' }}>%</span>
+                    </div>
+                  </div>
+                </div>
+                
                 {(() => {
-                  const { mrpTotal, discountAmt, total } = billCalc();
+                  const { mrpTotal, discountAmt, taxableAmount, gstAmt, total } = billCalc();
                   return (
                     <div className="bill-summary">
                       <div className="bill-row"><span>MRP Total</span><span>₹{mrpTotal.toFixed(2)}</span></div>

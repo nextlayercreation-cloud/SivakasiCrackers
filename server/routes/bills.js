@@ -17,11 +17,11 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { items, subtotal, tax, taxPct, total, customerName, customerPhone } = req.body;
+    const { items, subtotal, discountAmt, discountPct,  taxableAmount, tax, taxPct, total, customerName, customerPhone } = req.body;
     if (!items || !items.length) {
       return res.status(400).json({ message: 'Bill must contain at least one item' });
     }
-    const bill = await store.createBill({ items, subtotal, tax, taxPct, total, customerName, customerPhone });
+    const bill = await store.createBill({ items, subtotal, discountAmt, discountPct, taxableAmount, tax, taxPct, total, customerName, customerPhone });
     res.status(201).json(bill);
   } catch (err) {
     next(err);
