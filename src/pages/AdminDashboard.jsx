@@ -435,7 +435,8 @@ function BillPreview({ bill, onClose }) {
   );
 }
 
-function OrderPreview({ order, onClose }) {
+function OrderPreview({ order, onClose, billGST }) {
+  const gstAmt = Number(order.subtotal || 0) * (billGST / 100);
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
@@ -477,33 +478,21 @@ function OrderPreview({ order, onClose }) {
           <div className="bp-total">
             <div style={{ fontSize:'12px', color:'#555', marginBottom:6, lineHeight:1.8 }}>
               <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <span>MRP Total</span>
-                <span>₹{Number(order.subtotal || 0).toFixed(2)}</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between' , color:'#16a34a', fontWeight:700 }}>
-                <span>Discount</span>
-                <span>− ₹{Number(order.discountAmt || 0).toFixed(2)}</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>SubTotal</span>
-                <span>₹{Number(order.subtotal - order.discountAmt || 0).toFixed(2)}</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <span>Taxable Amount</span>
-                <span>₹{Number(order.subtotal - order.discountAmt || 0).toFixed(2)}</span>
+                <span>₹{Number(order.subtotal || 0).toFixed(2)}</span>
               </div>
               {/* <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>Delivery</span>
                 <span>₹{Number(order.delivery || 0).toFixed(2)}</span>
               </div> */}
               <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <span>Tax</span>
-                <span>₹{Number(order.taxPct || 0).toFixed(2)}</span>
+                <span>Tax ({billGST}%)</span>
+                <span>₹{Number(gstAmt || 0).toFixed(2)}</span>
               </div>
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
               <span>Total</span>
-              <span>₹{Number(order.total+order.tax || 0).toFixed(2)}</span>
+              <span>₹{Number(order.subtotal + gstAmt || 0).toFixed(2)}</span>
             </div>
           </div>
           <div className="bp-footer">Status: {order.status} • Thank you for shopping with us! 🎇</div>
@@ -1968,7 +1957,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
         />
       )}
       {billPreview && <BillPreview bill={billPreview} onClose={() => setBillPreview(null)} />}
-      {orderPreview && <OrderPreview order={orderPreview} onClose={() => setOrderPreview(null)} />}
+      {orderPreview && <OrderPreview order={orderPreview} onClose={() => setOrderPreview(null)} billGST={billGST} />}
       </div>
   );
 }

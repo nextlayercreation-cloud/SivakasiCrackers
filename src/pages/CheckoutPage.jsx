@@ -65,8 +65,8 @@ export default function CheckoutPage({ user, showToast }) {
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.cartQty, 0);
   // const delivery = subtotal >= 1000 ? 0 : 80;
   const discountPct = 0;
-  const gstAmt =  subtotal *  (gstPercentage / 100);
-  const total =  subtotal + gstAmt;
+  const gstAmt = Number(subtotal || 0) * (gstPercentage / 100);
+  // const total = subtotal + gstAmt;
   const delivery = 0;
   // const total = subtotal + delivery;
 
@@ -100,7 +100,7 @@ export default function CheckoutPage({ user, showToast }) {
           phone: user.phone,
           email: user.email || '',
         },
-        items: orderItems, subtotal, delivery, total,
+        items: orderItems, subtotal, delivery, subtotal,
         shippingAddress: { address: form.address, city: form.city, state: form.state, pincode: form.pincode },
       });
       clearCartCookie();
@@ -195,7 +195,7 @@ export default function CheckoutPage({ user, showToast }) {
                     <div style={{ fontWeight:700,fontSize:15,color:'var(--gold)' }}>+91 93426 35583</div>
                   </div>
                 </a>
-                <a href={`https://wa.me/917397635583?text=${encodeURIComponent(`Hi! I placed an order for ₹${total.toFixed(2)} on Sri Murugan Crackers. Please provide payment details.`)}`} target="_blank" rel="noopener noreferrer"
+                <a href={`https://wa.me/917397635583?text=${encodeURIComponent(`Hi! I placed an order for ₹${subtotal+gstAmt.toFixed(2)} on Sri Murugan Crackers. Please provide payment details.`)}`} target="_blank" rel="noopener noreferrer"
                   style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,background:'#25D366',borderRadius:10,padding:'12px 16px',color:'#fff',textDecoration:'none',fontWeight:700 }}>
                   <i className="ti ti-brand-whatsapp" style={{ fontSize:22 }} />
                   <div style={{ textAlign:'left' }}>
@@ -214,7 +214,7 @@ export default function CheckoutPage({ user, showToast }) {
             </div>
 
             <button className="place-order-btn" type="submit" disabled={processing}>
-              {processing ? '⏳ Placing Order...' : `Place Order — ₹${total.toFixed(2)}`}
+              {processing ? '⏳ Placing Order...' : `Place Order — ₹${(subtotal+gstAmt).toFixed(2)}`}
             </button>
           </form>
 
@@ -236,7 +236,7 @@ export default function CheckoutPage({ user, showToast }) {
                 <div className="pb-row"> <span>Tax ({gstPercentage}%):</span><span> ₹{gstAmt.toFixed(2)}</span></div>
                 {/* <div className="pb-row"><span>Delivery</span><span>{delivery === 0 ? '🎉 FREE' : `₹${delivery}`}</span></div> */}
                 {/* {delivery > 0 && <div style={{ fontSize:'11px',color:'var(--muted)',textAlign:'right' }}>Add ₹{(1000 - subtotal).toFixed(0)} for free delivery</div>} */}
-                <div className="pb-row pb-total"><span>Total</span><span>₹{(total+gstAmt).toFixed(2)}</span></div>
+                <div className="pb-row pb-total"><span>Total</span><span>₹{(subtotal+gstAmt).toFixed(2)}</span></div>
               </div>
             </div>
           </div>
