@@ -4,8 +4,10 @@ import { getProducts } from '../api/products';
 import { getCollection } from '../api/collections';
 import { addOrder } from '../api/orders';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://sivakasicrackersapi.onrender.com/api';
 const CART_COOKIE = 'sc_cart';
-
+const gstRes = await fetch(`${API_BASE_URL}/settings/gst`);
+const gstData = await gstRes.json();
 function readCartCookie() {
   const match = document.cookie.split('; ').find((entry) => entry.startsWith(`${CART_COOKIE}=`));
   if (!match) return {};
@@ -25,6 +27,7 @@ export default function CheckoutPage({ user, showToast }) {
   const [products, setProducts] = useState([]);
   const [collections, setCollections] = useState({ giftbox: [], combo: [], new_arrivals: [], offers: [] });
   const [cart, setCart] = useState({});
+  const [gstPercentage, setGstPercentage] = useState(0);
   const [processing, setProcessing] = useState(false);
   const [form, setForm] = useState({ address: '', city: '', state: 'Tamil Nadu', pincode: '' });
   const [errors, setErrors] = useState({});
@@ -38,6 +41,7 @@ export default function CheckoutPage({ user, showToast }) {
     getCollection('combo').then(d => setCollections(p => ({ ...p, combo: d }))).catch(() => {});
     getCollection('new_arrivals').then(d => setCollections(p => ({ ...p, new_arrivals: d }))).catch(() => {});
     getCollection('offers').then(d => setCollections(p => ({ ...p, offers: d }))).catch(() => {});
+    setGstPercentage(Number(gstData.gstPercentage || 10));
   }, [navigate, showToast]);
 
   const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); setErrors(p => ({ ...p, [k]: '' })); };
@@ -60,8 +64,11 @@ export default function CheckoutPage({ user, showToast }) {
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.cartQty, 0);
   // const delivery = subtotal >= 1000 ? 0 : 80;
+  const discountPct = 0;
+  const gstAmt =  subtotal *  (gstPercentage / 100);
+  const total =  subtotal + gstAmt;
   const delivery = 0;
-  const total = subtotal + delivery;
+  // const total = subtotal + delivery;
 
   const validate = () => {
     const e = {};
@@ -80,6 +87,7 @@ export default function CheckoutPage({ user, showToast }) {
       name: i.name,
       qty: i.cartQty,
       price: i.price,
+      discount: i.discount || 0,
       lineTotal: i.price * i.cartQty,
     }));
     try {
@@ -224,10 +232,11 @@ export default function CheckoutPage({ user, showToast }) {
                 </div>
               ))}
               <div className="price-breakdown" style={{ marginTop:'14px' }}>
-                <div className="pb-row"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
+                <div className="pb-row"><span>SubTotal</span><span>₹{subtotal.toFixed(2)}</span></div>
+                <div className="pb-row"> <span>Tax ({gstPercentage}%):</span><span> ₹{gstAmt.toFixed(2)}</span></div>
                 {/* <div className="pb-row"><span>Delivery</span><span>{delivery === 0 ? '🎉 FREE' : `₹${delivery}`}</span></div> */}
                 {/* {delivery > 0 && <div style={{ fontSize:'11px',color:'var(--muted)',textAlign:'right' }}>Add ₹{(1000 - subtotal).toFixed(0)} for free delivery</div>} */}
-                <div className="pb-row pb-total"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
+                <div className="pb-row pb-total"><span>Total</span><span>₹{(total+gstAmt).toFixed(2)}</span></div>
               </div>
             </div>
           </div>

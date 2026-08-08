@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-
+console.log("settings.js loaded");
 const { getGST, setGST } = require('../data/gst');
 
 router.get('/gst', (req, res) => {
+  console.log("GST ROUTE HIT");
   res.json({
     gstPercentage: getGST()
   });

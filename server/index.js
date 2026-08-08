@@ -30,6 +30,8 @@ const expensesRouter = require('./routes/expenses');
 const incomesRouter = require('./routes/incomes');
 const collectionsRouter = require('./routes/collections');
 const uiRouter = require('./routes/ui');
+const settingsRoutes = require('./routes/settings');
+console.log("SETTINGS ROUTE LOADED");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -105,6 +107,7 @@ app.use('/api/expenses', expensesRouter);
 app.use('/api/incomes', incomesRouter);
 app.use('/api/collections', collectionsRouter);
 app.use('/api/ui', uiRouter);
+app.use('/api/settings', settingsRoutes);
 
 // 404 handler
 app.use('/api', (req, res) => {
@@ -116,8 +119,6 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ message: 'Internal server error' });
 });
-
-app.use('/api/settings',require('./routes/settings'));
 
 app.listen(PORT, () => {
   // console.log(`🎆 Sivakasi Crackers API running on http://https://sivakasicrackersapi.onrender.com`);

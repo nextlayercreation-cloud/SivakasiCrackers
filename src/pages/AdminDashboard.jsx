@@ -400,16 +400,22 @@ function BillPreview({ bill, onClose }) {
                   <span>− ₹{(bill.discountAmt || 0).toFixed(2)}</span>
                 </div>
               )}
-              {bill.taxPct > 0 && (
-                <div style={{ display:'flex', justifyContent:'space-between', color:'#16a34a', fontWeight:700 }}>
-                  <span>GST ({bill.taxPct}%)</span>
-                  <span>+ ₹{(bill.tax || 0).toFixed(2)}</span>
+              {bill.discountPct > 0 && (
+                <div style={{ display:'flex', justifyContent:'space-between', fontWeight:700 }}>
+                  <span>Sub Total</span>
+                  <span> ₹{(bill.mrpTotal - bill.discountAmt || 0).toFixed(2)}</span>
                 </div>
               )}
               {bill.taxableAmount !== undefined && (
                 <div style={{ display:'flex', justifyContent:'space-between', color:'#555', fontWeight:600 }}>
                   <span>Taxable Amount</span>
                   <span>₹{Number(bill.taxableAmount).toFixed(2)}</span>
+                </div>
+              )}
+              {bill.taxPct > 0 && (
+                <div style={{ display:'flex', justifyContent:'space-between', color:'#df2323', fontWeight:700 }}>
+                  <span>Tax ({bill.taxPct}%)</span>
+                  <span>+ ₹{(bill.tax || 0).toFixed(2)}</span>
                 </div>
               )}
             </div>
@@ -471,25 +477,33 @@ function OrderPreview({ order, onClose }) {
           <div className="bp-total">
             <div style={{ fontSize:'12px', color:'#555', marginBottom:6, lineHeight:1.8 }}>
               <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <span>Subtotal</span>
+                <span>MRP Total</span>
                 <span>₹{Number(order.subtotal || 0).toFixed(2)}</span>
               </div>
+              <div style={{ display:'flex', justifyContent:'space-between' , color:'#16a34a', fontWeight:700 }}>
+                <span>Discount</span>
+                <span>− ₹{Number(order.discountAmt || 0).toFixed(2)}</span>
+              </div>
               <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>SubTotal</span>
+                <span>₹{Number(order.subtotal - order.discountAmt || 0).toFixed(2)}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>Taxable Amount</span>
+                <span>₹{Number(order.subtotal - order.discountAmt || 0).toFixed(2)}</span>
+              </div>
+              {/* <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>Delivery</span>
                 <span>₹{Number(order.delivery || 0).toFixed(2)}</span>
-              </div>
+              </div> */}
               <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>Tax</span>
                 <span>₹{Number(order.taxPct || 0).toFixed(2)}</span>
               </div>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <span>Discount</span>
-                <span>− ₹{Number(order.discountAmt || 0).toFixed(2)}</span>
-              </div>
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
               <span>Total</span>
-              <span>₹{Number(order.total || 0).toFixed(2)}</span>
+              <span>₹{Number(order.total+order.tax || 0).toFixed(2)}</span>
             </div>
           </div>
           <div className="bp-footer">Status: {order.status} • Thank you for shopping with us! 🎇</div>
@@ -553,7 +567,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
       setIncomes(inc);
       setCollections({ giftbox: gb, combo: cb, new_arrivals: na, offers: of });
       setCustomCategories(cats);
-      const gstRes = await fetch(`${API_BASE_URL}/api/settings/gst`);
+      const gstRes = await fetch(`${API_BASE_URL}/settings/gst`);
       const gstData = await gstRes.json();
       setBillGST(gstData.gstPercentage);
     } catch (err) {
@@ -1020,6 +1034,20 @@ export default function AdminDashboard({ onLogout, showToast }) {
                     {f === 'all' ? 'All Orders' : f === 'pending' ? '⏳ Pending' : '🚚 Shipped'}
                   </button>
                 ))}
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12, flexWrap:'wrap' }}>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>Tax %</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ display:'flex', alignItems:'center', border:'1px solid var(--border)', borderRadius:7, overflow:'hidden' }}>  
+                      <input type="number" min={0} max={99} value={billGST} 
+                      style={{ height: 40, width:60, padding:'5px 8px', border:'none', fontSize:13, textAlign:'center' }}
+                      onChange={async (e) => {const value = Number(e.target.value);
+                      setBillGST(value);
+                      await fetch(`${API_BASE_URL}/settings/gst`,{method: 'PUT',headers: {'Content-Type':'application/json'},body: JSON.stringify({gstPercentage: value})});
+                        }}/>
+                       <span style={{ padding:'0 8px', color:'var(--muted)', fontSize:12, background:'#f8f8ff' }}>%</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="admin-table-wrap">
                 <div className="admin-table-head">
@@ -1226,16 +1254,14 @@ export default function AdminDashboard({ onLogout, showToast }) {
                   </div>
                 </div>
 
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12, flexWrap:'wrap' }}>
-                  <label style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>GST %</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:12, flexWrap:'wrap' }}>
+                  <label style={{ fontSize:12, fontWeight:600, color:'var(--navy)' }}>Tax %</label>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <div style={{ display:'flex', alignItems:'center', border:'1px solid var(--border)', borderRadius:7, overflow:'hidden' }}>  
                       <input type="number" min={0} max={99} value={billGST} 
-                      style={{ height: 50, width:60, padding:'5px 8px', border:'none', fontSize:13, textAlign:'center' }}
-                      onChange={async (e) => {const value = Number(e.target.value);
-                      setBillGST(value);
-                      await fetch(`${API_BASE_URL}/api/settings/gst`,{method: 'PUT',headers: {'Content-Type':'application/json'},body: JSON.stringify({gstPercentage: value})});
-                        }}/>
+                      style={{ height: 40, width:60, padding:'5px 8px', border:'none', fontSize:13, textAlign:'center' }}
+                      onChange={e => setBillGST(Number(e.target.value))}
+                      />
                        <span style={{ padding:'0 8px', color:'var(--muted)', fontSize:12, background:'#f8f8ff' }}>%</span>
                     </div>
                   </div>
