@@ -419,9 +419,9 @@ function BillPreview({ bill, onClose }) {
                 </div>
               )}
             </div>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
               <span>Grand Total</span>
-              <span>₹{bill.total.toFixed(2)}</span>
+              <span>₹{Number(bill.total || 0).toFixed(2)}</span>
             </div>
           </div>
           <div className="bp-footer">Thank you for shopping with us! 🎇 &nbsp;•&nbsp; Safe Diwali!</div>
@@ -492,7 +492,7 @@ function OrderPreview({ order, onClose, billGST }) {
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:800, color:'var(--navy)', borderTop:'2px solid var(--border)', paddingTop:6 }}>
               <span>Total</span>
-              <span>₹{Number(order.subtotal + gstAmt || 0).toFixed(2)}</span>
+              <span>₹{Number((order.subtotal || 0) + gstAmt).toFixed(2)}</span>
             </div>
           </div>
           <div className="bp-footer">Status: {order.status} • Thank you for shopping with us! 🎇</div>
@@ -604,13 +604,13 @@ export default function AdminDashboard({ onLogout, showToast }) {
     orders: orders.length,
     pending: orders.filter(o => o.status === 'Pending').length,
     shipped: orders.filter(o => o.status === 'Shipped').length,
-    revenue: orders.reduce((s, o) => s + o.total, 0),
+    revenue: orders.reduce((s, o) => s + Number(o.total || 0), 0),
     lowStock: products.filter(isLow).length,
     outStock: products.filter(isOut).length,
-    billTotal: bills.reduce((s, b) => s + b.total, 0),
-    manualIncome: incomes.reduce((s, i) => s + i.amount, 0),
-    totalExpenses: expenses.reduce((s, e) => s + e.amount, 0),
-    totalIncome: orders.reduce((s, o) => s + o.total, 0) + bills.reduce((s, b) => s + b.total, 0) + incomes.reduce((s, i) => s + i.amount, 0),
+    billTotal: bills.reduce((s, b) => s + Number(b.total || 0), 0),
+    manualIncome: incomes.reduce((s, i) => s + Number(i.amount || 0), 0),
+    totalExpenses: expenses.reduce((s, e) => s + Number(e.amount || 0), 0),
+    totalIncome: orders.reduce((s, o) => s + Number(o.total || 0), 0) + bills.reduce((s, b) => s + Number(b.total || 0), 0) + incomes.reduce((s, i) => s + Number(i.amount || 0), 0),
     get totalProfit() { return this.totalIncome - this.totalExpenses; },
   };
 
@@ -986,7 +986,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                         <tr key={o.id}>
                           <td style={{ fontWeight: 600, color: 'var(--gold)', fontSize: '11px' }}>{o.id}</td>
                           <td>{o.userName}</td>
-                          <td>₹{o.total.toFixed(0)}</td>
+                          <td>₹{Number(o.total).toFixed(0)}</td>
                           <td><span className={`status-pill ${o.status === 'Pending' ? 'pill-pending' : 'pill-shipped'}`}>{o.status}</span></td>
                         </tr>
                       ))}
@@ -1059,7 +1059,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                             <div style={{ fontSize: '11px', marginBottom: 6 }}>{o.items.length} item(s)</div>
                             <button type="button" className="filter-btn" onClick={() => setOrderPreview(o)}>🔍 View</button>
                           </td>
-                          <td style={{ fontWeight: 700 }}>₹{o.total.toFixed(0)}</td>
+                          <td style={{ fontWeight: 700 }}>₹{Number(o.total || 0).toFixed(0)}</td>
                           <td><span className={`status-pill ${o.status === 'Pending' ? 'pill-pending' : 'pill-shipped'}`}>{o.status}</span></td>
                           <td style={{ fontSize: '11px' }}>{o.shippingAddress?.city}, {o.shippingAddress?.state}<br/>{o.shippingAddress?.pincode}</td>
                           <td style={{ fontSize: '11px', color: 'var(--muted)' }}>{new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
@@ -1299,9 +1299,9 @@ export default function AdminDashboard({ onLogout, showToast }) {
                         <td style={{ fontWeight: 700, color: 'var(--gold)', fontSize: '11px' }}>{b.id}</td>
                         <td>{b.customerName || '—'}</td>
                         <td>{b.items.length} item(s)</td>
-                        <td>₹{b.subtotal.toFixed(0)}</td>
-                        <td>₹{b.tax.toFixed(0)}</td>
-                        <td style={{ fontWeight: 700 }}>₹{b.total.toFixed(0)}</td>
+                        <td>₹{Number(b.subtotal || 0).toFixed(0)}</td>
+                        <td>₹{Number(b.tax || 0).toFixed(0)}</td>
+                        <td style={{ fontWeight: 700 }}>₹{Number(b.total || 0).toFixed(0)}</td>
                         <td style={{ fontSize: '11px', color: 'var(--muted)' }}>{new Date(b.createdAt).toLocaleDateString('en-IN')}</td>
                         <td><button type="button" className="filter-btn" onClick={() => setBillPreview(b)}>🔍 View</button></td>
                       </tr>
@@ -1389,7 +1389,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                 <div style={{ background:'#ffe0e0', borderRadius:12, padding:'14px 18px', borderLeft:'4px solid var(--red)' }}>
                   <div style={{ fontSize:11, color:'var(--muted)', marginBottom:4 }}>This Month</div>
                   <div style={{ fontSize:22, fontWeight:800, color:'var(--red)' }}>
-                    ₹{expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s,e) => s+e.amount, 0).toFixed(0)}
+                    ₹{expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s,e) => s + Number(e.amount || 0), 0).toFixed(0)}
                   </div>
                 </div>
               </div>
@@ -1414,7 +1414,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           <td style={{ color:'var(--muted)', fontSize:11 }}>{idx+1}</td>
                           <td style={{ fontWeight:600 }}>{e.title}</td>
                           <td><span style={{ background:'#fff0e0', color:'#ea580c', padding:'2px 10px', borderRadius:20, fontSize:11, fontWeight:700 }}>{e.category}</span></td>
-                          <td style={{ fontWeight:700, color:'var(--red)' }}>₹{e.amount.toFixed(2)}</td>
+                          <td style={{ fontWeight:700, color:'var(--red)' }}>₹{Number(e.amount || 0).toFixed(2)}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{new Date(e.date).toLocaleDateString('en-IN')}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{e.note || '—'}</td>
                           <td><button type="button" className="btn-danger" style={{ padding:'4px 10px', fontSize:12 }} onClick={() => handleDeleteExpense(e.id)}>🗑</button></td>
@@ -1547,7 +1547,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           <td style={{ fontSize:11 }}>{o.items.length} item(s)</td>
                           <td>₹{(o.subtotal||0).toFixed(0)}</td>
                           <td>₹{(o.delivery||0).toFixed(0)}</td>
-                          <td style={{ fontWeight:700, color:'var(--green)' }}>₹{o.total.toFixed(0)}</td>
+                          <td style={{ fontWeight:700, color:'var(--green)' }}>₹{Number(o.total || 0).toFixed(0)}</td>
                           <td><span className={`status-pill ${o.status === 'Pending' ? 'pill-pending' : 'pill-shipped'}`}>{o.status}</span></td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
                         </tr>
@@ -1582,7 +1582,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                               : <span style={{ color:'var(--muted)', fontSize:11 }}>—</span>
                             }
                           </td>
-                          <td style={{ fontWeight:700, color:'#8b5cf6' }}>₹{b.total.toFixed(0)}</td>
+                          <td style={{ fontWeight:700, color:'#8b5cf6' }}>₹{Number(b.total || 0).toFixed(0)}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{new Date(b.createdAt).toLocaleDateString('en-IN')}</td>
                         </tr>
                       ))}
@@ -1606,7 +1606,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           <td style={{ color:'var(--muted)', fontSize:11 }}>{index + 1}</td>
                           <td style={{ fontWeight:600 }}>{entry.title}</td>
                           <td><span style={{ background:'#e0f4ff', color:'#0284c7', padding:'2px 10px', borderRadius:20, fontSize:11, fontWeight:700 }}>{entry.category}</span></td>
-                          <td style={{ fontWeight:700, color:'#0284c7' }}>₹{entry.amount.toFixed(2)}</td>
+                          <td style={{ fontWeight:700, color:'#0284c7' }}>₹{Number(entry.amount || 0).toFixed(2)}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{new Date(entry.date).toLocaleDateString('en-IN')}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{entry.note || '—'}</td>
                           <td><button type="button" className="btn-danger" style={{ padding:'4px 10px', fontSize:12 }} onClick={() => handleDeleteIncome(entry.id)}>🗑</button></td>
