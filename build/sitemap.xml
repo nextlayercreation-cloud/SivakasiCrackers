@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://srimurugancrackers.com/</loc>
+  </url>
+
+  <url>
+    <loc>https://srimurugancrackers.com/login</loc>
+  </url>
+
+  <url>
+    <loc>https://srimurugancrackers.com/dashboard</loc>
+  </url>
+
+  <url>
+    <loc>https://srimurugancrackers.com/checkout</loc>
+  </url>
+
+  <url>
+    <loc>https://srimurugancrackers.com/order-success</loc>
+  </url>
+
+  <url>
+    <loc>https://srimurugancrackers.com/admin</loc>
+  </url>
+
+</urlset>

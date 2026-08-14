@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BrowserRouter as Router, Routes, Route,
   Navigate, useNavigate, useLocation
@@ -8,9 +8,54 @@ import AdminDashboard  from './pages/AdminDashboard';
 import CheckoutPage    from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import FireworksCanvas from './components/FireworksCanvas';
+import SearchableSelect from './components/SelectableSearch';
 import { registerUser, loginUser, loginAdmin } from './api/auth';
 import './styles/index.css';
 import Logo from './components/Logo';
+
+const stateOptions = [
+  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
+  'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+];
+
+const stateCityMap = {
+  'Andhra Pradesh': ['Visakhapatnam','Vijayawada','Guntur','Rajahmundry','Tirupati','Kakinada','Anantapur','Nellore','Amaravati','Kurnool'],
+  'Arunachal Pradesh': ['Itanagar','Naharlagun','Tawang','Bomdila','Pasighat','Ziro'],
+  'Assam': ['Guwahati','Silchar','Dibrugarh','Jorhat','Tezpur','Nagaon','Bongaigaon'],
+  'Bihar': ['Patna','Gaya','Bhagalpur','Muzaffarpur','Purnia','Darbhanga','Ara','Nalanda'],
+  'Chhattisgarh': ['Raipur','Bilaspur','Durg','Bhilai','Korba','Rajnandgaon','Jagdalpur'],
+  'Goa': ['Panaji','Margao','Vasco da Gama','Mapusa','Ponda'],
+  'Gujarat': ['Ahmedabad','Surat','Vadodara','Rajkot','Bhavnagar','Junagadh','Gandhinagar','Anand','Nadiad','Jamnagar'],
+  'Haryana': ['Chandigarh','Faridabad','Gurugram','Panipat','Hisar','Sonipat','Rohtak','Karnal'],
+  'Himachal Pradesh': ['Shimla','Manali','Dharamshala','Kullu','Solan','Mandi','Una'],
+  'Jharkhand': ['Ranchi','Jamshedpur','Dhanbad','Bokaro','Hazaribagh','Deoghar'],
+  'Karnataka': ['Bengaluru','Mysuru','Mangaluru','Hubballi','Belagavi','Shimoga','Tumakuru','Davangere','Bagalkot','Ballari'],
+  'Kerala': ['Thiruvananthapuram','Kochi','Kozhikode','Thrissur','Kollam','Kannur','Alappuzha','Palakkad','Malappuram'],
+  'Madhya Pradesh': ['Bhopal','Indore','Jabalpur','Gwalior','Ujjain','Sagar','Ratlam','Rewa','Satna','Chhindwara'],
+  'Maharashtra': ['Mumbai','Pune','Nagpur','Nashik','Aurangabad','Thane','Kolhapur','Solapur','Amravati','Nanded'],
+  'Manipur': ['Imphal','Thoubal','Kakching','Ukhrul','Senapati'],
+  'Meghalaya': ['Shillong','Tura','Jowai','Nongpoh','Baghmara'],
+  'Mizoram': ['Aizawl','Lunglei','Chanmari','Serchhip','Kolasib'],
+  'Nagaland': ['Kohima','Dimapur','Mokokchung','Tuensang','Wokha'],
+  'Odisha': ['Bhubaneswar','Cuttack','Puri','Rourkela','Berhampur','Sambalpur','Balasore','Jharsuguda'],
+  'Punjab': ['Chandigarh','Ludhiana','Amritsar','Jalandhar','Patiala','Mohali','Bathinda','Firozpur'],
+  'Rajasthan': ['Jaipur','Jodhpur','Udaipur','Ajmer','Kota','Bikaner','Alwar','Sikar','Bhilwara'],
+  'Sikkim': ['Gangtok','Namchi','Gyalshing','Mangan'],
+  'Tamil Nadu': ['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Tirunelveli','Vellore','Erode','Thanjavur','Sivakasi','Virudhunagar','Rajapalayam','Kovilpatti','Tuticorin','Dindigul','Kumbakonam','Nagercoil'],
+  'Telangana': ['Hyderabad','Warangal','Nizamabad','Khammam','Karimnagar','Secunderabad','Ramagundam'],
+  'Tripura': ['Agartala','Udaipur','Khowai','Dharmanagar','Ambassa'],
+  'Uttar Pradesh': ['Lucknow','Kanpur','Ghaziabad','Agra','Varanasi','Prayagraj','Meerut','Noida','Moradabad','Aligarh'],
+  'Uttarakhand': ['Dehradun','Haridwar','Roorkee','Haldwani','Nainital','Rishikesh','Pithoragarh'],
+  'West Bengal': ['Kolkata','Howrah','Durgapur','Asansol','Siliguri','Darjeeling','Burdwan','Bally'],
+  'Andaman and Nicobar Islands': ['Port Blair','Havelock Island','Neil Island','Diglipur','Mayabunder'],
+  'Chandigarh': ['Chandigarh'],
+  'Dadra and Nagar Haveli and Daman and Diu': ['Daman','Diu','Silvassa','Vapi'],
+  'Delhi': ['Delhi','New Delhi','North Delhi','South Delhi','East Delhi','West Delhi'],
+  'Jammu and Kashmir': ['Srinagar','Jammu','Anantnag','Baramulla','Kathua'],
+  'Ladakh': ['Leh','Kargil','Padum'],
+  'Lakshadweep': ['Kavaratti','Agatti','Minicoy'],
+  'Puducherry': ['Puducherry','Karaikal','Yanam','Mahe']
+};
 
 /* ═══════════════════════════════════════════════════════════════
    SMART LOGIN PAGE
@@ -32,9 +77,10 @@ function LoginPage({ onLogin, showToast }) {
   const [form, setForm] = useState({
     identifier: '', // phone for user, email for admin
     password: '',
-    fname: '', lname: '', city: '', state: 'Tamil Nadu',
+    fname: '', lname: '', state: 'Tamil Nadu', city: '',
   });
 
+  const cityOptions = stateCityMap[form.state] || [];
   const nameRegex = /^[A-Za-z\u0B80-\u0BFF\s]+$/;
 
   const set = (k, v) => {
@@ -45,7 +91,17 @@ function LoginPage({ onLogin, showToast }) {
         return;
       }
     }
-    setForm(p => ({ ...p, [k]: v }));
+
+    setForm(p => {
+      if (k === 'state') {
+        return {
+          ...p,
+          state: v,
+          city: stateCityMap[v]?.includes(p.city) ? p.city : '',
+        };
+      }
+      return { ...p, [k]: v };
+    });
     setErrors(p => ({ ...p, [k]: '' }));
 
     // Auto-detect role when typing identifier
@@ -195,7 +251,7 @@ function LoginPage({ onLogin, showToast }) {
             <input
               style={S.inp(errors.identifier)}
               type="text"
-              placeholder="9876543210  or  admin@crackers.com"
+              placeholder="Your Mobile Number"
               value={form.identifier}
               onChange={e => set('identifier', e.target.value)}
               autoFocus
@@ -214,10 +270,10 @@ function LoginPage({ onLogin, showToast }) {
             {errors.password && <div style={S.err}>{errors.password}</div>}
 
             {/* Hint */}
-            <div style={{ fontSize: 11, color: '#888', marginTop: 8, lineHeight: 1.5 }}>
+            {/* <div style={{ fontSize: 11, color: '#888', marginTop: 8, lineHeight: 1.5 }}>
               👤 Customer: use your <b style={{ color: '#ccc' }}>10-digit phone</b><br />
               ⚙️ Admin: use <b style={{ color: '#FAC775' }}>admin@crackers.com</b> as email
-            </div>
+            </div> */}
 
             <button style={S.btn(loading)} type="submit" disabled={loading}>
               {loading ? 'Logging in...' : 'Login →'}
@@ -245,46 +301,52 @@ function LoginPage({ onLogin, showToast }) {
         {mode === 'register' && (
           <form onSubmit={handleRegister}>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div class="register-form" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <label style={S.lbl}>First Name *</label>
-                <input style={S.inp(errors.fname)} placeholder="Murugan"
+                <input style={S.inp(errors.fname)} placeholder="Your First Name"
                   value={form.fname} onChange={e => set('fname', e.target.value)} />
                 {errors.fname && <div style={S.err}>{errors.fname}</div>}
               </div>
               <div>
                 <label style={S.lbl}>Last Name *</label>
-                <input style={S.inp(errors.lname)} placeholder="Kumar"
+                <input style={S.inp(errors.lname)} placeholder="Your Last Name"
                   value={form.lname} onChange={e => set('lname', e.target.value)} />
                 {errors.lname && <div style={S.err}>{errors.lname}</div>}
               </div>
             </div>
 
             <label style={S.lbl}>Phone Number *</label>
-            <input style={S.inp(errors.identifier)} type="tel" placeholder="9876543210"
+            <input class="register-phone" style={S.inp(errors.identifier)} type="tel" placeholder="Your Mobile Number"
               maxLength={10} value={form.identifier}
               onChange={e => set('identifier', e.target.value)} />
             {errors.identifier && <div style={S.err}>{errors.identifier}</div>}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
-                <label style={S.lbl}>City *</label>
-                <input style={S.inp(errors.city)} placeholder="Sivakasi"
-                  value={form.city} onChange={e => set('city', e.target.value)} />
-                {errors.city && <div style={S.err}>{errors.city}</div>}
+                <label style={S.lbl}>State *</label>
+                <SearchableSelect
+                  options={stateOptions}
+                  value={form.state}
+                  onChange={(value) => set('state', value)}
+                  placeholder="Select state"
+                />
               </div>
               <div>
-                <label style={S.lbl}>State</label>
-                <select style={{ ...S.inp(), color: '#fff' }}
-                  value={form.state} onChange={e => set('state', e.target.value)}>
-                  {['Tamil Nadu','Andhra Pradesh','Karnataka','Kerala','Maharashtra','Gujarat','Rajasthan']
-                    .map(s => <option key={s} style={{ color: '#000' }}>{s}</option>)}
-                </select>
+                <label style={S.lbl}>City *</label>
+                <SearchableSelect
+                  options={cityOptions}
+                  value={form.city}
+                  onChange={(value) => set('city', value)}
+                  placeholder={cityOptions.length ? 'Select city' : 'Choose a state first'}
+                  disabled={!cityOptions.length}
+                />
+                {errors.city && <div style={S.err}>{errors.city}</div>}
               </div>
             </div>
 
             <label style={S.lbl}>Password * (min 4 chars)</label>
-            <input style={S.inp(errors.password)} type="password" placeholder="Create a password"
+            <input class="register-pass" style={S.inp(errors.password)} type="password" placeholder="Create a password"
               value={form.password} onChange={e => set('password', e.target.value)} />
             {errors.password && <div style={S.err}>{errors.password}</div>}
 
@@ -356,7 +418,10 @@ function App() {
     setUser(null);
     sessionStorage.removeItem('sc_user');
   };
-  const showToast    = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   if (!ready) return null;
 

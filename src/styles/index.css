@@ -13,7 +13,7 @@ a{text-decoration:none;color:inherit;}
 input,select,textarea{font-family:inherit;}
 
 /* ── AUTH ── */
-.ht5{font-family:cursive;letter-spacing: 2px;color: var(--gold);}
+.ht5{font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;letter-spacing: 2px;color: var(--gold);}
 .auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;overflow:hidden;}
 .auth-card{background:rgba(255,255,255,0.95);border-radius:16px;padding:36px 32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative;z-index:1;}
 .auth-logo{text-align:center;margin-bottom:20px;}
@@ -633,6 +633,10 @@ tr:hover td{background:#fafaff;}
   padding: 14px 16px;
   border-top: 1px solid rgba(250,199,117,0.12);
   flex-shrink: 0;
+}
+
+.register-form input,.register-phone,.register-pass{
+  background-color:var(--card) !important;
 }
 
 /* ═══════════════════════════════════════════════════

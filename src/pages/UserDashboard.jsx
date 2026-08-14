@@ -144,14 +144,17 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
     writeCartCookie(c);
   };
 
-  const addToCart = p => {
+  const addToCart = (p, event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
     const q = qty[p.id]||1;
     if (p.stock===0){ showToast('Out of stock!'); return; }
     if (q>p.stock){ showToast(`Only ${p.stock} in stock!`); return; }
     const prev = cart[p.id]||0;
     if (prev+q>p.stock){ showToast(`Cannot add more than ${p.stock}`); return; }
     saveCart({...cart,[p.id]:prev+q});
-    // showToast(`${p.name} x${q} added! 🛒`);
+    showToast(`${p.name} x${q} added! 🛒`);
     setQty(x=>({...x,[p.id]:1}));
   };
 
@@ -213,7 +216,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
               <span>{qty[p.id]||1}</span>
               <button disabled={isOut} onClick={()=>setQty(x=>({...x,[p.id]:Math.min(p.stock,(x[p.id]||1)+1)}))}>+</button>
             </div>
-            <button type="button" className="add-cart-btn" disabled={isOut} onClick={()=>addToCart(p)}>
+            <button type="button" className="add-cart-btn" disabled={isOut} onClick={(event)=>addToCart(p, event)}>
               {isOut?<><i className="ti ti-ban"/> Out of Stock</>:<><i className="ti ti-shopping-cart-plus"/> Add</>}
             </button>
           </div>
@@ -633,7 +636,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
               </div>
               <div style={{background:'#f8f8ff',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
                 <h4 style={{fontSize:15,fontWeight:700,color:'var(--navy)',marginBottom:14}}>Send a Message</h4>
-                {[{key:'name',label:'Full name *',type:'text',ph:'Murugan Kumar'},{key:'phone',label:'Mobile *',type:'tel',ph:'9876543210'},{key:'email',label:'Email',type:'email',ph:'email@example.com'}].map(f=>(
+                {[{key:'name',label:'Full name *',type:'text',ph:'Your Name'},{key:'phone',label:'Mobile *',type:'tel',ph:'Your Mobile Number'},{key:'email',label:'Email',type:'email',ph:'Your Email Address'}].map(f=>(
                   <div key={f.key} style={{marginBottom:10}}>
                     <label style={{display:'block',fontSize:11,color:'var(--muted)',marginBottom:4}}>{f.label}</label>
                     <input type={f.type} value={contactForm[f.key]} onChange={e=>setContactForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.ph} style={{width:'100%',padding:'10px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:14}}/>

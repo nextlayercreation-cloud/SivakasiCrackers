@@ -299,7 +299,7 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
             <input type="number" min={0} value={form.lowStockThreshold} onChange={e => set('lowStockThreshold', e.target.value)} placeholder="10" />
           </div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: -8, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8, marginBottom: 10 }}>
           This product will be flagged "Low Stock" once quantity drops to or below this number.
         </div>
         <label>Description</label>

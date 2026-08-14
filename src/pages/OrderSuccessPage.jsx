@@ -20,7 +20,7 @@ export default function OrderSuccessPage({ user }) {
   return (
     <div className="success-page">
       <div className="success-card">
-        <div className="success-icon">🎆</div>
+        <div className="success-icon"><img style={{ width: '100px' }} src="/Logo.png" alt="" /> <span style={{position:'relative',top:'-35px',fontSize:'1.8rem', marginTop:'10px', fontWeight:'bold'}}>Sri Murugan Crackers</span></div>
         <h2>Order Placed!</h2>
         <p>Your fireworks are on their way. Get ready to celebrate! 🎉</p>
         <div className="order-id-badge">{order.id}</div>

@@ -1,11 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SearchableSelect from '../components/SelectableSearch';
 import { getProducts } from '../api/products';
 import { getCollection } from '../api/collections';
 import { addOrder } from '../api/orders';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://sivakasicrackersapi.onrender.com/api';
 const CART_COOKIE = 'sc_cart';
+const stateOptions = [
+  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
+  'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+];
+
+const stateCityMap = {
+  'Andhra Pradesh': ['Visakhapatnam','Vijayawada','Guntur','Rajahmundry','Tirupati','Kakinada','Anantapur','Nellore','Amaravati','Kurnool'],
+  'Arunachal Pradesh': ['Itanagar','Naharlagun','Tawang','Bomdila','Pasighat','Ziro'],
+  'Assam': ['Guwahati','Silchar','Dibrugarh','Jorhat','Tezpur','Nagaon','Bongaigaon'],
+  'Bihar': ['Patna','Gaya','Bhagalpur','Muzaffarpur','Purnia','Darbhanga','Ara','Nalanda'],
+  'Chhattisgarh': ['Raipur','Bilaspur','Durg','Bhilai','Korba','Rajnandgaon','Jagdalpur'],
+  'Goa': ['Panaji','Margao','Vasco da Gama','Mapusa','Ponda'],
+  'Gujarat': ['Ahmedabad','Surat','Vadodara','Rajkot','Bhavnagar','Junagadh','Gandhinagar','Anand','Nadiad','Jamnagar'],
+  'Haryana': ['Chandigarh','Faridabad','Gurugram','Panipat','Hisar','Sonipat','Rohtak','Karnal'],
+  'Himachal Pradesh': ['Shimla','Manali','Dharamshala','Kullu','Solan','Mandi','Una'],
+  'Jharkhand': ['Ranchi','Jamshedpur','Dhanbad','Bokaro','Hazaribagh','Deoghar'],
+  'Karnataka': ['Bengaluru','Mysuru','Mangaluru','Hubballi','Belagavi','Shimoga','Tumakuru','Davangere','Bagalkot','Ballari'],
+  'Kerala': ['Thiruvananthapuram','Kochi','Kozhikode','Thrissur','Kollam','Kannur','Alappuzha','Palakkad','Malappuram'],
+  'Madhya Pradesh': ['Bhopal','Indore','Jabalpur','Gwalior','Ujjain','Sagar','Ratlam','Rewa','Satna','Chhindwara'],
+  'Maharashtra': ['Mumbai','Pune','Nagpur','Nashik','Aurangabad','Thane','Kolhapur','Solapur','Amravati','Nanded'],
+  'Manipur': ['Imphal','Thoubal','Kakching','Ukhrul','Senapati'],
+  'Meghalaya': ['Shillong','Tura','Jowai','Nongpoh','Baghmara'],
+  'Mizoram': ['Aizawl','Lunglei','Chanmari','Serchhip','Kolasib'],
+  'Nagaland': ['Kohima','Dimapur','Mokokchung','Tuensang','Wokha'],
+  'Odisha': ['Bhubaneswar','Cuttack','Puri','Rourkela','Berhampur','Sambalpur','Balasore','Jharsuguda'],
+  'Punjab': ['Chandigarh','Ludhiana','Amritsar','Jalandhar','Patiala','Mohali','Bathinda','Firozpur'],
+  'Rajasthan': ['Jaipur','Jodhpur','Udaipur','Ajmer','Kota','Bikaner','Alwar','Sikar','Bhilwara'],
+  'Sikkim': ['Gangtok','Namchi','Gyalshing','Mangan'],
+  'Tamil Nadu': ['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Tirunelveli','Vellore','Erode','Thanjavur','Sivakasi','Virudhunagar','Rajapalayam','Kovilpatti','Tuticorin','Dindigul','Kumbakonam','Nagercoil'],
+  'Telangana': ['Hyderabad','Warangal','Nizamabad','Khammam','Karimnagar','Secunderabad','Ramagundam'],
+  'Tripura': ['Agartala','Udaipur','Khowai','Dharmanagar','Ambassa'],
+  'Uttar Pradesh': ['Lucknow','Kanpur','Ghaziabad','Agra','Varanasi','Prayagraj','Meerut','Noida','Moradabad','Aligarh'],
+  'Uttarakhand': ['Dehradun','Haridwar','Roorkee','Haldwani','Nainital','Rishikesh','Pithoragarh'],
+  'West Bengal': ['Kolkata','Howrah','Durgapur','Asansol','Siliguri','Darjeeling','Burdwan','Bally'],
+  'Andaman and Nicobar Islands': ['Port Blair','Havelock Island','Neil Island','Diglipur','Mayabunder'],
+  'Chandigarh': ['Chandigarh'],
+  'Dadra and Nagar Haveli and Daman and Diu': ['Daman','Diu','Silvassa','Vapi'],
+  'Delhi': ['Delhi','New Delhi','North Delhi','South Delhi','East Delhi','West Delhi'],
+  'Jammu and Kashmir': ['Srinagar','Jammu','Anantnag','Baramulla','Kathua'],
+  'Ladakh': ['Leh','Kargil','Padum'],
+  'Lakshadweep': ['Kavaratti','Agatti','Minicoy'],
+  'Puducherry': ['Puducherry','Karaikal','Yanam','Mahe']
+};
+
+const pinCityMap = {
+  '626123': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626124': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626126': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626127': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626128': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626130': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626135': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626140': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '626145': { city: 'Sivakasi', state: 'Tamil Nadu' },
+  '625001': { city: 'Madurai', state: 'Tamil Nadu' },
+  '630001': { city: 'Tuticorin', state: 'Tamil Nadu' },
+  '600001': { city: 'Chennai', state: 'Tamil Nadu' },
+  '560001': { city: 'Bengaluru', state: 'Karnataka' },
+  '500001': { city: 'Hyderabad', state: 'Telangana' },
+  '682001': { city: 'Kochi', state: 'Kerala' },
+  '110001': { city: 'Delhi', state: 'Delhi' },
+  '400001': { city: 'Mumbai', state: 'Maharashtra' },
+};
 const gstRes = await fetch(`${API_BASE_URL}/settings/gst`);
 const gstData = await gstRes.json();
 function readCartCookie() {
@@ -29,8 +93,10 @@ export default function CheckoutPage({ user, showToast }) {
   const [cart, setCart] = useState({});
   const [gstPercentage, setGstPercentage] = useState(0);
   const [processing, setProcessing] = useState(false);
-  const [form, setForm] = useState({ address: '', city: '', state: 'Tamil Nadu', pincode: '' });
+  const [form, setForm] = useState({ address: '', state: 'Tamil Nadu', city: '', pincode: '' });
   const [errors, setErrors] = useState({});
+
+  const cityOptions = stateCityMap[form.state] || [];
 
   useEffect(() => {
     const saved = readCartCookie();
@@ -44,7 +110,35 @@ export default function CheckoutPage({ user, showToast }) {
     setGstPercentage(Number(gstData.gstPercentage || 10));
   }, [navigate, showToast]);
 
-  const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); setErrors(p => ({ ...p, [k]: '' })); };
+  const set = (k, v) => {
+    setForm(prev => {
+      if (k === 'state') {
+        return {
+          ...prev,
+          state: v,
+          city: stateCityMap[v]?.includes(prev.city) ? prev.city : '',
+          [k]: v,
+        };
+      }
+
+      return { ...prev, [k]: v };
+    });
+    setErrors(p => ({ ...p, [k]: '' }));
+  };
+
+  const applyPincodeSuggestion = (pincode) => {
+    const digits = pincode.replace(/\D/g, '').slice(0, 6);
+    const match = pinCityMap[digits];
+    if (!match) return digits;
+
+    setForm(prev => ({
+      ...prev,
+      pincode: digits,
+      state: match.state,
+      city: stateCityMap[match.state]?.includes(match.city) ? match.city : prev.city,
+    }));
+    return digits;
+  };
 
   // Same combined lookup as the dashboard — cart items can come from the
   // main product catalog OR from Gift Box / Combo / New Arrivals, so
@@ -163,22 +257,41 @@ export default function CheckoutPage({ user, showToast }) {
               />
               {errors.address && <div className="field-err">{errors.address}</div>}
 
-              <div className="form-row">
+              <label>State</label>
+              <SearchableSelect
+                options={stateOptions}
+                value={form.state}
+                onChange={(value) => set('state', value)}
+                placeholder="Select state"
+              />
+
+              <div className="form-row" style={{ marginTop: 12 }}>
                 <div>
                   <label>City</label>
-                  <input value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
+                  <SearchableSelect
+                    options={cityOptions}
+                    value={form.city}
+                    onChange={(value) => set('city', value)}
+                    placeholder={cityOptions.length ? 'Select city' : 'Choose a state first'}
+                    disabled={!cityOptions.length}
+                  />
                   {errors.city && <div className="field-err">{errors.city}</div>}
                 </div>
                 <div>
                   <label>Pincode</label>
-                  <input value={form.pincode} onChange={e => set('pincode', e.target.value)} placeholder="600001" maxLength={6} inputMode="numeric" />
+                  <input
+                    value={form.pincode}
+                    onChange={e => {
+                      const next = applyPincodeSuggestion(e.target.value);
+                      set('pincode', next);
+                    }}
+                    placeholder="600001"
+                    maxLength={6}
+                    inputMode="numeric"
+                  />
                   {errors.pincode && <div className="field-err">{errors.pincode}</div>}
                 </div>
               </div>
-              <label>State</label>
-              <select value={form.state} onChange={e => set('state', e.target.value)}>
-                {['Tamil Nadu','Andhra Pradesh','Karnataka','Kerala','Maharashtra','Gujarat','Rajasthan'].map(s => <option key={s}>{s}</option>)}
-              </select>
             </div>
 
             {/* Payment — Contact Admin */}
@@ -188,11 +301,18 @@ export default function CheckoutPage({ user, showToast }) {
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📞</div>
                 <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Contact Admin to Complete Payment</div>
                 <div style={{ color: '#cfd0e6', fontSize: 12, marginBottom: 16 }}>Place your order first, then contact us via phone or WhatsApp to pay.</div>
-                <a href="tel:+919876543210" style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(250,199,117,0.3)',borderRadius:10,padding:'12px 16px',marginBottom:10,color:'#fff',textDecoration:'none' }}>
+                <a href="tel:+919342635583" style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(250,199,117,0.3)',borderRadius:10,padding:'12px 16px',marginBottom:10,color:'#fff',textDecoration:'none' }}>
                   <i className="ti ti-phone" style={{ fontSize:20,color:'var(--gold)' }} />
                   <div style={{ textAlign:'left' }}>
                     <div style={{ fontSize:11,color:'#aaa' }}>Call us</div>
                     <div style={{ fontWeight:700,fontSize:15,color:'var(--gold)' }}>+91 93426 35583</div>
+                  </div>
+                </a>
+                <a href="tel:+917397635583" style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(250,199,117,0.3)',borderRadius:10,padding:'12px 16px',marginBottom:10,color:'#fff',textDecoration:'none' }}>
+                  <i className="ti ti-phone" style={{ fontSize:20,color:'var(--gold)' }} />
+                  <div style={{ textAlign:'left' }}>
+                    <div style={{ fontSize:11,color:'#aaa' }}>Call us</div>
+                    <div style={{ fontWeight:700,fontSize:15,color:'var(--gold)' }}>+91 73976 35583</div>
                   </div>
                 </a>
                 <a href={`https://wa.me/917397635583?text=${encodeURIComponent(`Hi! I placed an order for ₹${total.toFixed(2)} on Sri Murugan Crackers. Please provide payment details.`)}`} target="_blank" rel="noopener noreferrer"
@@ -201,6 +321,14 @@ export default function CheckoutPage({ user, showToast }) {
                   <div style={{ textAlign:'left' }}>
                     <div style={{ fontSize:11,opacity:.85 }}>Chat on WhatsApp</div>
                     <div style={{ fontSize:15 }}>+91 73976 35583</div>
+                  </div>
+                </a>
+                <a href={`https://wa.me/919342635583?text=${encodeURIComponent(`Hi! I placed an order for ₹${total.toFixed(2)} on Sri Murugan Crackers. Please provide payment details.`)}`} target="_blank" rel="noopener noreferrer"
+                  style={{ marginTop:'10px', display:'flex',alignItems:'center',justifyContent:'center',gap:10,background:'#25D366',borderRadius:10,padding:'12px 16px',color:'#fff',textDecoration:'none',fontWeight:700 }}>
+                  <i className="ti ti-brand-whatsapp" style={{ fontSize:22 }} />
+                  <div style={{ textAlign:'left' }}>
+                    <div style={{ fontSize:11,opacity:.85 }}>Chat on WhatsApp</div>
+                    <div style={{ fontSize:15 }}>+91 93426 35583</div>
                   </div>
                 </a>
               </div>

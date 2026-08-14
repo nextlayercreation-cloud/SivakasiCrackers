@@ -6,6 +6,7 @@ export default function SearchableSelect({
   value,              // controlled value
   onChange,           // (value) => void
   placeholder = "Select an option…",
+  disabled = false,
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -81,19 +82,21 @@ export default function SearchableSelect({
       {/* Trigger button */}
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((o) => !o)}
         style={{
           width: "100%",
           height: 38,
           padding: "0 32px 0 10px",
           border: "1px solid #ccc",
           borderRadius: 6,
-          background: "#fff",
-          cursor: "pointer",
+          background: disabled ? "#f3f4f6" : "#fff",
+          cursor: disabled ? "not-allowed" : "pointer",
           textAlign: "left",
           fontSize: 14,
           color: value ? "#111" : "#999",
           position: "relative",
+          opacity: disabled ? 0.7 : 1,
         }}
       >
         {normalizedOptions.find((option) => String(option.value) === String(value))?.label || placeholder}
