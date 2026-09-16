@@ -247,6 +247,79 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
           </div>
           <div className="header-actions">
             {/* ALERTS */}
+            {/* ── SOCIAL + CONTACT ROUND BUTTONS ── */}
+<div className="top-social-actions">
+
+  {/* Instagram */}
+  <a
+    href="https://www.instagram.com/srimurugancrackers.sivakasi?igsi=a2l1ZGUwaWRtOTZh"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="top-social-btn instagram-btn"
+    aria-label="Instagram"
+    title="Instagram"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1.2" className="svg-fill" />
+    </svg>
+  </a>
+
+  {/* Facebook */}
+  <a
+    href="https://www.facebook.com/share/1LaABDmt6U/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="top-social-btn facebook-btn"
+    aria-label="Facebook"
+    title="Facebook"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        className="facebook-f"
+        d="M14.2 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1V10H8.4v3h2.7v8h3.1z"
+      />
+    </svg>
+  </a>
+
+  {/* WhatsApp */}
+  <a
+    href="https://wa.me/919345635583"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="top-social-btn whatsapp-btn"
+    aria-label="WhatsApp +91 93456 35583"
+    title="WhatsApp +91 93456 35583"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        className="whatsapp-shape"
+        d="M12 3.2a8.8 8.8 0 0 0-7.6 13.2L3 21l4.8-1.4A8.8 8.8 0 1 0 12 3.2z"
+      />
+      <path
+        className="whatsapp-phone"
+        d="M8.8 8.1c.2-.3.5-.4.8-.2l1.1.7c.3.2.4.5.2.8l-.6.9c.5 1 1.3 1.8 2.3 2.3l.9-.6c.3-.2.6-.1.8.2l.7 1.1c.2.3.1.6-.2.8-.5.4-1.1.6-1.7.5-2.1-.3-4.7-2.9-5-5-.1-.6.1-1.2.5-1.7z"
+      />
+    </svg>
+  </a>
+
+
+  {/* Call - 93426 */}
+  <a
+    href="tel:+919342635583"
+    className="top-social-btn call-btn"
+    aria-label="Call +91 93426 35583"
+    title="Call +91 93426 35583"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M7.2 4.5l2.1 2.8c.3.4.3.9 0 1.3L8 10.2a12 12 0 0 0 5.8 5.8l1.6-1.3c.4-.3.9-.3 1.3 0l2.8 2.1c.4.3.5.8.3 1.2l-.8 1.5c-.3.6-.9.9-1.5.9C10.6 20.4 3.6 13.4 3.6 6.8c0-.6.3-1.2.9-1.5L6 4.5c.4-.2.9-.1 1.2 0z"
+      />
+    </svg>
+  </a>
+
+</div>
             <button className="haction notif-haction" onClick={openNotif} style={{background:'none',border:'none',position:'relative'}}>
               <span style={{position:'relative',display:'inline-block',fontSize:22,lineHeight:1}}>
                 🔔
@@ -597,7 +670,7 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
               </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:16,marginBottom:24}}>
-              {[['25+','Years Experience'],['500+','Products'],['50K+','Happy Customers'],['100%','Genuine']].map(([n,l])=>(
+              {[['5+','Years Experience'],['500+','Products'],['20K+','Happy Customers'],['100%','Genuine']].map(([n,l])=>(
                 <div key={l} style={{background:'#fff',border:'1px solid var(--border)',borderRadius:12,padding:20,textAlign:'center'}}>
                   <div style={{fontSize:28,fontWeight:900,color:'var(--red)'}}>{n}</div>
                   <div style={{fontSize:12,color:'var(--muted)',marginTop:4}}>{l}</div>
@@ -621,37 +694,242 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
           </div>
         )}
 
-        {/* ══ CONTACT ══ */}
-        {section==='contact'&&(
-          <div style={{background:'#fff',padding:'28px 24px'}}>
-            <div className="sec-head"><h3><i className="ti ti-phone" style={{color:'var(--gold)',marginRight:6}}/>Contact Us</h3></div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:24,marginTop:16}}>
-              <div style={{background:'#f8f8ff',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
-                <h4 style={{fontSize:15,fontWeight:700,color:'var(--navy)',marginBottom:14}}>Get in Touch</h4>
-                {[['ti-map-pin','Address: 3/267 D, Raamji crackers shop,Chinnakamanpatti, sattur road, Sivakasi - 626123'],['ti-phone','Call: +91  73976 35583 or +91 93426 35583 '],['ti-mail','srimuruganmcrackers.sivakasi@gamil.com'],['ti-brand-whatsapp','WhatsApp: +91  73976 35583 or +91 93426 35583']].map(([icon,text])=>(
-                  <div key={text} style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:12,fontSize:13}}>
-                    <i className={`ti ${icon}`} style={{fontSize:20,color:'var(--gold)',flexShrink:0,marginTop:1}}/><span>{text}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{background:'#f8f8ff',border:'1px solid var(--border)',borderRadius:12,padding:20}}>
-                <h4 style={{fontSize:15,fontWeight:700,color:'var(--navy)',marginBottom:14}}>Send a Message</h4>
-                {[{key:'name',label:'Full name *',type:'text',ph:'Your Name'},{key:'phone',label:'Mobile *',type:'tel',ph:'Your Mobile Number'},{key:'email',label:'Email',type:'email',ph:'Your Email Address'}].map(f=>(
-                  <div key={f.key} style={{marginBottom:10}}>
-                    <label style={{display:'block',fontSize:11,color:'var(--muted)',marginBottom:4}}>{f.label}</label>
-                    <input type={f.type} value={contactForm[f.key]} onChange={e=>setContactForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.ph} style={{width:'100%',padding:'10px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:14}}/>
-                  </div>
-                ))}
-                <textarea value={contactForm.message} onChange={e=>setContactForm(p=>({...p,message:e.target.value}))} placeholder="Your message..."
-                  style={{width:'100%',padding:'10px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:14,height:90,resize:'vertical',fontFamily:'inherit',marginBottom:10}}/>
-                <button onClick={()=>{ if(!contactForm.name||!contactForm.phone||!contactForm.message){showToast('Fill required fields');return;} showToast('Message sent! 📞'); setContactForm({name:'',phone:'',email:'',subject:'',message:''}); }}
-                  style={{width:'100%',background:'var(--navy)',color:'var(--gold)',border:'none',padding:'12px',borderRadius:8,fontWeight:700,fontSize:14}}>
-                  <i className="ti ti-send" style={{marginRight:6}}/>Send Message
-                </button>
-              </div>
+{/* ══ CONTACT ══ */}
+{section === 'contact' && (
+  <div className="contact-page">
+
+    {/* Header */}
+    <div className="contact-heading">
+      <div className="contact-eyebrow">
+        <i className="ti ti-map-pin" />
+        GET IN TOUCH
+      </div>
+
+      <h2>Contact Us</h2>
+
+      <p>
+        Have a question or need help with your order?
+        <br />
+        We are happy to help you.
+      </p>
+    </div>
+
+    {/* 2 Column */}
+    <div className="contact-grid">
+
+      {/* ═════════ LEFT : CONTACT DETAILS ═════════ */}
+      <div className="contact-card">
+
+        <div className="contact-card-title">
+          <div>
+            <h3>Sri Murugan Crackers</h3>
+            <p>Premium quality crackers from Sivakasi</p>
+          </div>
+          <div className="contact-title-icon">
+            <i className="ti ti-sparkles" />
+          </div>
+        </div>
+
+        {/* Address */}
+        <div className="contact-item">
+          <div className="contact-icon address-icon">
+            <i className="ti ti-map-pin" />
+          </div>
+
+          <div className="contact-item-content">
+            <span className="contact-label">STORE ADDRESS</span>
+
+            <div className="contact-value">
+              3/267 D, Raamji Crackers Shop,
+              <br />
+              Chinnakamanpatti, Sattur Road,
+              <br />
+              Sivakasi - 626123
+            </div>
+
+            <a
+              href="https://maps.app.goo.gl/Vwbo4Hq4VetxGzW66?g_st=aw"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-action address-action"
+            >
+              <i className="ti ti-navigation" />
+              Get Directions
+              <i className="ti ti-arrow-up-right" />
+            </a>
+          </div>
+        </div>
+
+        {/* Phone */}
+        <div className="contact-item">
+          <div className="contact-icon phone-icon">
+            <i className="ti ti-phone" />
+          </div>
+
+          <div className="contact-item-content">
+            <span className="contact-label">PHONE</span>
+
+            <div className="phone-list">
+              <a
+                href="tel:+917397635583"
+                className="contact-link"
+              >
+                <span>+91 73976 35583</span>
+                <span className="small-action">
+                  <i className="ti ti-phone-call" />
+                  Call
+                </span>
+              </a>
+
+              <a
+                href="tel:+919342635583"
+                className="contact-link"
+              >
+                <span>+91 93426 35583</span>
+                <span className="small-action">
+                  <i className="ti ti-phone-call" />
+                  Call
+                </span>
+              </a>
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Email */}
+        <div className="contact-item">
+          <div className="contact-icon email-icon">
+            <i className="ti ti-mail" />
+          </div>
+
+          <div className="contact-item-content">
+            <span className="contact-label">EMAIL</span>
+
+            <a
+              href="mailto:srimuruganmcrackers.sivakasi@gamil.com"
+              className="contact-email"
+            >
+              srimuruganmcrackers.sivakasi@gamil.com
+            </a>
+
+            <a
+              href="mailto:srimuruganmcrackers.sivakasi@gamil.com"
+              className="contact-action email-action"
+            >
+              <i className="ti ti-mail-forward" />
+              Send Email
+              <i className="ti ti-arrow-up-right" />
+            </a>
+          </div>
+        </div>
+
+        {/* WhatsApp */}
+        <div className="contact-item contact-item-last">
+          <div className="contact-icon whatsapp-icon">
+            <i className="ti ti-brand-whatsapp" />
+          </div>
+
+          <div className="contact-item-content">
+            <span className="contact-label">WHATSAPP</span>
+
+            <div className="contact-value">
+              +91 93456 35583
+            </div>
+
+            <a
+              href="https://wa.me/919345635583"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-action whatsapp-action"
+            >
+              <i className="ti ti-brand-whatsapp" />
+              Chat on WhatsApp
+              <i className="ti ti-arrow-up-right" />
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ═════════ RIGHT : GOOGLE MAP ═════════ */}
+      <div className="map-card">
+
+        <div className="map-header">
+          <div>
+            <div className="map-title">
+              <i className="ti ti-map-2" />
+              Find Our Store
+            </div>
+
+            <div className="map-subtitle">
+              Chinnakamanpatti, Sivakasi
+            </div>
+          </div>
+
+          <div className="map-header-icon">
+            <i className="ti ti-map-pin-filled" />
+          </div>
+        </div>
+
+        {/* Map */}
+        <div className="map-container">
+          <iframe
+            title="Sri Murugan Crackers Location"
+            src="https://www.google.com/maps?q=3/267%20D,%20Raamji%20Crackers%20Shop,%20Chinnakamanpatti,%20Sivakasi%20626123&output=embed"
+            width="100%"
+            height="100%"
+            style={{
+              border: 0,
+              display: 'block',
+            }}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+
+          <div className="map-location-badge">
+            <i className="ti ti-map-pin-filled" />
+            Sri Murugan Crackers
+          </div>
+        </div>
+
+        {/* Map Footer */}
+        <div className="map-footer">
+
+          <div className="map-footer-info">
+            <span>Need directions?</span>
+            <strong>Open our exact store location</strong>
+          </div>
+
+          <a
+            href="https://maps.app.goo.gl/Vwbo4Hq4VetxGzW66?g_st=aw"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="directions-btn"
+          >
+            <i className="ti ti-navigation" />
+            Get Directions
+            <i className="ti ti-arrow-up-right" />
+          </a>
+
+        </div>
+      </div>
+
+    </div>
+
+    {/* Bottom Info */}
+    <div className="contact-bottom-note">
+      <i className="ti ti-info-circle" />
+
+      <span>
+        Click <strong>Get Directions</strong> to open our exact
+        store location in Google Maps.
+      </span>
+    </div>
+
+  </div>
+)}
+
+
 
         {/* ══ MY ORDERS ══ */}
         {section==='myorders'&&(

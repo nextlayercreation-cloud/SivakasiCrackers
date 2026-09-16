@@ -349,11 +349,36 @@ async function addExpense(data) {
   await setDocument('expenses', id, expense);
   return expense;
 }
-
 async function deleteExpense(id) {
-  await deleteDocument('expenses', id);
-}
+  const expense = await getDocument('expenses', id);
 
+  if (!expense) {
+    throw new Error('Expense not found');
+  }
+
+  const deletedAt = nowIso();
+
+  const historyId = `EXPENSE-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+
+  await setDocument('history', historyId, {
+    type: 'expense',
+    action: 'DELETE',
+    originalId: String(id),
+    originalData: expense,
+    originalDate: expense.date || expense.createdAt || deletedAt,
+    deletedAt,
+    createdAt: deletedAt,
+  });
+
+  await deleteDocument('expenses', id);
+
+  return {
+    success: true,
+    historyId,
+  };
+}
 // ─── INCOMES ────────────────────────────────────────────────────────────────
 async function getIncomes() {
   return readAllDocuments('incomes');
@@ -374,9 +399,35 @@ async function addIncome(data) {
   await setDocument('incomes', id, income);
   return income;
 }
-
 async function deleteIncome(id) {
+  const income = await getDocument('incomes', id);
+
+  if (!income) {
+    throw new Error('Income not found');
+  }
+
+  const deletedAt = nowIso();
+
+  const historyId = `INCOME-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+
+  await setDocument('history', historyId, {
+    type: 'income',
+    action: 'DELETE',
+    originalId: String(id),
+    originalData: income,
+    originalDate: income.date || income.createdAt || deletedAt,
+    deletedAt,
+    createdAt: deletedAt,
+  });
+
   await deleteDocument('incomes', id);
+
+  return {
+    success: true,
+    historyId,
+  };
 }
 
 // ─── COLLECTIONS ────────────────────────────────────────────────────────────

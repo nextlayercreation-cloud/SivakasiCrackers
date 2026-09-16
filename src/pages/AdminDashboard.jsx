@@ -1,10 +1,35 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getOrders, shipOrder } from '../api/orders';
+import {
+  getOrders,
+  shipOrder,
+  deleteOrder,
+} from '../api/orders';
+
+import {
+  getBills,
+  createBill,
+  updateBill,
+  deleteBill,
+} from '../api/bills';
+
+import {
+  getExpenses,
+  addExpense,
+  updateExpense,
+  deleteExpense,
+} from '../api/expenses';
+
+import {
+  getIncomes,
+  addIncome as addIncomeAPI,
+  updateIncome,
+  deleteIncome,
+} from '../api/incomes';
+
+import { getHistory } from '../api/history';
 import { getProducts, addProduct, updateProduct, deleteProduct, addStockToProduct } from '../api/products';
-import { getBills, createBill } from '../api/bills';
-import { getExpenses, addExpense, deleteExpense } from '../api/expenses';
-import { getIncomes, addIncome as addIncomeAPI, deleteIncome } from '../api/incomes';
+
 import { getCollection, addToCollection, updateInCollection, deleteFromCollection } from '../api/collections';
 import { getExtraCategories, saveExtraCategories } from '../api/ui';
 import SelectableSearch from '../components/SelectableSearch';
@@ -17,16 +42,19 @@ const API_BASE_URL = process.env.REACT_APP_API_URL;
 // SIDEBAR TABS
 // ──────────────────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'dashboard', icon: 'ti-dashboard',      label: 'Dashboard' },
-  { id: 'orders',    icon: 'ti-package',         label: 'Orders' },
-  { id: 'stock',     icon: 'ti-boxes',           label: 'Stock Management' },
-  { id: 'billing',   icon: 'ti-file-invoice',    label: 'Billing' },
-  { id: 'bills',     icon: 'ti-receipt',         label: 'Bill History' },
-  { id: 'expenses',  icon: 'ti-cash',            label: 'Expenses' },
-  { id: 'income',    icon: 'ti-trending-up',     label: 'Income History' },
-  { id: 'collections', icon: 'ti-gift',            label: 'Collections' },
-  // { id: 'offers',    icon: 'ti-tag',             label: 'Manage Offers' },
-  { id: 'products',  icon: 'ti-tools',           label: 'Manage Products' },
+  { id: 'dashboard', icon: 'ti-dashboard', label: 'Dashboard' },
+  { id: 'orders', icon: 'ti-package', label: 'Orders' },
+  { id: 'stock', icon: 'ti-boxes', label: 'Stock Management' },
+  { id: 'billing', icon: 'ti-file-invoice', label: 'Billing' },
+  { id: 'bills', icon: 'ti-receipt', label: 'Bill History' },
+  { id: 'expenses', icon: 'ti-cash', label: 'Expenses' },
+  { id: 'income', icon: 'ti-trending-up', label: 'Income History' },
+
+  // NEW
+  { id: 'history', icon: 'ti-history', label: 'History' },
+
+  { id: 'collections', icon: 'ti-gift', label: 'Collections' },
+  { id: 'products', icon: 'ti-tools', label: 'Manage Products' },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -533,6 +561,14 @@ export default function AdminDashboard({ onLogout, showToast }) {
   const [productModal, setProductModal] = useState(null); // null | 'new' | product object
   const [billPreview, setBillPreview] = useState(null);
   const [orderPreview, setOrderPreview] = useState(null);
+  const [history, setHistory] = useState([]);
+const [historyFilter, setHistoryFilter] = useState('all');
+
+const [editingBillId, setEditingBillId] = useState(null);
+
+const [editingExpenseId, setEditingExpenseId] = useState(null);
+
+const [editingIncomeId, setEditingIncomeId] = useState(null);
   const [customCategories, setCustomCategories] = useState([]);
 
   // Billing state
@@ -548,7 +584,47 @@ export default function AdminDashboard({ onLogout, showToast }) {
   const reload = useCallback(async () => {
     try {
       setLoading(true);
-      const [o, p, b, ex, inc, gb, cb, na, of, cats] = await Promise.all([getOrders(), getProducts(), getBills(), getExpenses(), getIncomes(), getCollection('giftbox'), getCollection('combo'), getCollection('new_arrivals'), getCollection('offers'), getExtraCategories()]);
+    const [
+  o,
+  p,
+  b,
+  ex,
+  inc,
+  hist,
+  gb,
+  cb,
+  na,
+  of,
+  cats
+] = await Promise.all([
+  getOrders(),
+  getProducts(),
+  getBills(),
+  getExpenses(),
+  getIncomes(),
+  getHistory(),
+  getCollection('giftbox'),
+  getCollection('combo'),
+  getCollection('new_arrivals'),
+  getCollection('offers'),
+  getExtraCategories(),
+]);
+
+setOrders(o);
+setProducts(p);
+setBills(b);
+setExpenses(ex);
+setIncomes(inc);
+setHistory(hist);
+
+setCollections({
+  giftbox: gb,
+  combo: cb,
+  new_arrivals: na,
+  offers: of,
+});
+
+setCustomCategories(cats);
       setOrders(o);
       setProducts(p);
       setBills(b);
@@ -589,7 +665,29 @@ export default function AdminDashboard({ onLogout, showToast }) {
         showToast(err.message || "Could not ship order");
       } 
   };
+  const handleDeleteOrder = async (id) => {
+  if (!window.confirm(
+    'Delete this order? It will be moved to History.'
+  )) {
+    return;
+  }
 
+  try {
+    await deleteOrder(id);
+
+    await reload();
+
+    showToast(
+      'Order deleted and moved to History.'
+    );
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      err.message || 'Could not delete order'
+    );
+  }
+};
   const filteredOrders = orderFilter === 'all' ? orders : orders.filter(o => o.status.toLowerCase() === orderFilter);
 
   // Each product carries its own lowStockThreshold (set via Add/Edit Product form,
@@ -615,21 +713,92 @@ export default function AdminDashboard({ onLogout, showToast }) {
   };
 
   const EXPENSE_CATEGORIES = ['Purchase', 'Transport', 'Labour', 'Rent', 'Electricity', 'Packaging', 'Marketing', 'Other'];
+  const handleEditExpense = (expense) => {
+  setEditingExpenseId(expense.id);
 
-  const handleAddExpense = async () => {
-    const errs = {};
-    if (!expenseForm.title.trim()) errs.title = 'Required';
-    if (!expenseForm.amount || isNaN(expenseForm.amount) || Number(expenseForm.amount) <= 0) errs.amount = 'Enter valid amount';
-    setExpenseErrors(errs);
-    if (Object.keys(errs).length) return;
-    try {
-      await addExpense({ ...expenseForm, date: expenseForm.date || new Date().toISOString() });
-      setExpenseForm({ title: '', amount: '', category: 'Purchase', note: '', date: '' });
-      setExpenseErrors({});
-      await reload();
-      showToast('Expense added!');
-    } catch (err) { showToast('Could not add expense'); }
-  };
+  setExpenseForm({
+    title: expense.title || '',
+    amount: String(expense.amount || ''),
+    category: expense.category || 'Purchase',
+    note: expense.note || '',
+    date: expense.date
+      ? expense.date.slice(0, 10)
+      : '',
+  });
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+};
+ const handleAddExpense = async () => {
+  const errs = {};
+
+  if (!expenseForm.title.trim()) {
+    errs.title = 'Required';
+  }
+
+  if (
+    !expenseForm.amount ||
+    isNaN(expenseForm.amount) ||
+    Number(expenseForm.amount) <= 0
+  ) {
+    errs.amount = 'Enter valid amount';
+  }
+
+  setExpenseErrors(errs);
+
+  if (Object.keys(errs).length) {
+    return;
+  }
+
+  try {
+    const payload = {
+      ...expenseForm,
+      date:
+        expenseForm.date ||
+        new Date().toISOString(),
+    };
+
+    if (editingExpenseId) {
+      await updateExpense(
+        editingExpenseId,
+        payload
+      );
+
+      showToast(
+        'Expense updated! ✅'
+      );
+    } else {
+      await addExpense(payload);
+
+      showToast(
+        'Expense added! ✅'
+      );
+    }
+
+    setEditingExpenseId(null);
+
+    setExpenseForm({
+      title: '',
+      amount: '',
+      category: 'Purchase',
+      note: '',
+      date: '',
+    });
+
+    setExpenseErrors({});
+
+    await reload();
+
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      'Could not save expense'
+    );
+  }
+};
 
   const handleDeleteExpense = async (id) => {
     if (!window.confirm('Delete this expense?')) return;
@@ -717,21 +886,93 @@ export default function AdminDashboard({ onLogout, showToast }) {
   };
 
   const INCOME_CATEGORIES = ['Sales', 'Online Order', 'Wholesale', 'Advance', 'Refund Received', 'Other'];
+  const handleEditIncome = (entry) => {
+  setEditingIncomeId(entry.id);
 
-  const handleAddIncome = async () => {
-    const errs = {};
-    if (!incomeForm.title.trim()) errs.title = 'Required';
-    if (!incomeForm.amount || isNaN(incomeForm.amount) || Number(incomeForm.amount) <= 0) errs.amount = 'Enter valid amount';
-    setIncomeErrors(errs);
-    if (Object.keys(errs).length) return;
-    try {
-      await addIncomeAPI({ ...incomeForm, date: incomeForm.date || new Date().toISOString() });
-      setIncomeForm({ title: '', amount: '', category: 'Sales', note: '', date: '' });
-      setIncomeErrors({});
-      await reload();
-      showToast('Income added! ✅');
-    } catch (err) { showToast('Could not add income'); }
-  };
+  setIncomeForm({
+    title: entry.title || '',
+    amount: String(entry.amount || ''),
+    category: entry.category || 'Sales',
+    note: entry.note || '',
+    date: entry.date
+      ? entry.date.slice(0, 10)
+      : '',
+  });
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+};
+ const handleAddIncome = async () => {
+  const errs = {};
+
+  if (!incomeForm.title.trim()) {
+    errs.title = 'Required';
+  }
+
+  if (
+    !incomeForm.amount ||
+    isNaN(incomeForm.amount) ||
+    Number(incomeForm.amount) <= 0
+  ) {
+    errs.amount =
+      'Enter valid amount';
+  }
+
+  setIncomeErrors(errs);
+
+  if (Object.keys(errs).length) {
+    return;
+  }
+
+  try {
+    const payload = {
+      ...incomeForm,
+      date:
+        incomeForm.date ||
+        new Date().toISOString(),
+    };
+
+    if (editingIncomeId) {
+      await updateIncome(
+        editingIncomeId,
+        payload
+      );
+
+      showToast(
+        'Income updated! ✅'
+      );
+    } else {
+      await addIncomeAPI(payload);
+
+      showToast(
+        'Income added! ✅'
+      );
+    }
+
+    setEditingIncomeId(null);
+
+    setIncomeForm({
+      title: '',
+      amount: '',
+      category: 'Sales',
+      note: '',
+      date: '',
+    });
+
+    setIncomeErrors({});
+
+    await reload();
+
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      'Could not save income'
+    );
+  }
+};
 
   const handleDeleteIncome = async (id) => {
     if (!window.confirm('Delete this income entry?')) return;
@@ -824,49 +1065,210 @@ export default function AdminDashboard({ onLogout, showToast }) {
   const addBillItem = () => setBillItems(p => [...p, { productId: '', qty: 1 }]);
   const removeBillItem = (i) => setBillItems(p => p.filter((_, idx) => idx !== i));
   const setBillItem = (i, k, v) => setBillItems(p => p.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
+const handleEditBill = (bill) => {
+  setEditingBillId(bill.id);
 
-  const handleGenerateBill = async () => {
-    const bErrs = {};
-    if (!billCustomer.name.trim()) bErrs.name = 'Customer name is required';
-    if (!/^\d{10}$/.test(billCustomer.phone)) bErrs.phone = 'Valid 10-digit phone required';
-    if (!billCustomer.address.trim()) bErrs.address = 'Address is required';
-    setBillErrors(bErrs);
-    if (Object.keys(bErrs).length) return;
-    const validItems = billItems.filter(i => i.productId);
-    if (!validItems.length) { showToast('Add at least one product'); return; }
+  setBillItems(
+    (bill.items || []).map(item => ({
+      productId: item.productId,
+      qty: Number(item.qty) || 1,
+    }))
+  );
 
-    const itemsWithDetails = validItems.map(i => {
-      const p = products.find(x => String(x.id) === String(i.productId));
-      return { productId: i.productId, name: p.name, qty: parseInt(i.qty) || 1, price: p.price, mrp: p.mrp || p.price };
+  setBillCustomer({
+    name: bill.customerName || '',
+    phone: bill.customerPhone || '',
+    address: bill.customerAddress || '',
+  });
+
+  setBillDiscount(
+    Number(bill.discountPct || 0)
+  );
+
+  setBillGST(
+    Number(bill.taxPct || billGST || 0)
+  );
+
+  setBillPreview(null);
+
+  setTab('billing');
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+};
+const handleDeleteBill = async (id) => {
+  if (!window.confirm(
+    'Delete this bill? It will be moved to History.'
+  )) {
+    return;
+  }
+
+  try {
+    await deleteBill(id);
+
+    setBillPreview(null);
+
+    await reload();
+
+    showToast(
+      'Bill deleted and moved to History.'
+    );
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      err.message || 'Could not delete bill'
+    );
+  }
+};
+ const handleGenerateBill = async () => {
+  const bErrs = {};
+
+  if (!billCustomer.name.trim()) {
+    bErrs.name = 'Customer name is required';
+  }
+
+  if (!/^\d{10}$/.test(billCustomer.phone)) {
+    bErrs.phone =
+      'Valid 10-digit phone required';
+  }
+
+  if (!billCustomer.address.trim()) {
+    bErrs.address =
+      'Address is required';
+  }
+
+  setBillErrors(bErrs);
+
+  if (Object.keys(bErrs).length) {
+    return;
+  }
+
+  const validItems =
+    billItems.filter(i => i.productId);
+
+  if (!validItems.length) {
+    showToast('Add at least one product');
+    return;
+  }
+
+  const itemsWithDetails =
+    validItems.map(i => {
+      const p = products.find(
+        x =>
+          String(x.id) ===
+          String(i.productId)
+      );
+
+      if (!p) {
+        throw new Error(
+          `Product not found: ${i.productId}`
+        );
+      }
+
+      return {
+        productId: i.productId,
+        name: p.name,
+        qty: parseInt(i.qty, 10) || 1,
+        price: p.price,
+        mrp: p.mrp || p.price,
+      };
     });
 
-    // Check stock
-    for (const item of itemsWithDetails) {
-      const p = products.find(x => String(x.id) === String(item.productId));
-      if (item.qty > p.stock) { showToast(`Insufficient stock for ${item.name}`); return; }
+  const {
+    mrpTotal,
+    discountAmt,
+    taxableAmount,
+    gstAmt,
+    total,
+  } = billCalc();
+
+  try {
+    const payload = {
+      customerName: billCustomer.name,
+      customerPhone: billCustomer.phone,
+      customerAddress: billCustomer.address,
+      items: itemsWithDetails,
+      subtotal: mrpTotal,
+      mrpTotal,
+      discountPct: billDiscount,
+      discountAmt,
+      tax: gstAmt,
+      taxPct: billGST,
+      taxableAmount,
+      total,
+    };
+
+    let bill;
+
+    if (editingBillId) {
+      bill = await updateBill(
+        editingBillId,
+        payload
+      );
+
+      showToast('Bill updated successfully! ✅');
+    } else {
+      // Only check stock for a new bill.
+      for (const item of itemsWithDetails) {
+        const p = products.find(
+          x =>
+            String(x.id) ===
+            String(item.productId)
+        );
+
+        if (
+          p &&
+          item.qty > Number(p.stock || 0)
+        ) {
+          showToast(
+            `Insufficient stock for ${item.name}`
+          );
+          return;
+        }
+      }
+
+      bill = await createBill(payload);
+
+      showToast('Bill generated! ✅');
     }
 
-    const { mrpTotal, discountAmt, taxableAmount, gstAmt, total } = billCalc();
+    setEditingBillId(null);
 
-    try {
-      const bill = await createBill({
-        customerName: billCustomer.name,
-        customerPhone: billCustomer.phone,
-        customerAddress: billCustomer.address,
-        items: itemsWithDetails,
-        subtotal: mrpTotal, mrpTotal, discountPct: billDiscount, discountAmt, tax: gstAmt, taxPct: billGST,taxableAmount, total
-      });
+    setBillPreview(bill);
 
-      setBillPreview(bill);
-      setBillItems([{ productId: '', qty: 1 }]);
-      setBillCustomer({ name: '', phone: '', address: '' });
-      setBillErrors({});
-      await reload();
-      showToast('Bill generated!');
-    } catch (err) {
-      showToast('Could not generate bill');
-    }
-  };
+    setBillItems([
+      {
+        productId: '',
+        qty: 1,
+      },
+    ]);
+
+    setBillCustomer({
+      name: '',
+      phone: '',
+      address: '',
+    });
+
+    setBillDiscount(0);
+    setBillErrors({});
+
+    await reload();
+
+  } catch (err) {
+    console.error(
+      'Bill Save Error:',
+      err
+    );
+
+    showToast(
+      err.message ||
+      'Could not save bill'
+    );
+  }
+};
 
   // billCalc used inline in JSX now
 
@@ -1063,13 +1465,39 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           <td><span className={`status-pill ${o.status === 'Pending' ? 'pill-pending' : 'pill-shipped'}`}>{o.status}</span></td>
                           <td style={{ fontSize: '11px' }}>{o.shippingAddress?.city}, {o.shippingAddress?.state}<br/>{o.shippingAddress?.pincode}</td>
                           <td style={{ fontSize: '11px', color: 'var(--muted)' }}>{new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
-                          <td>
-                            {o.status === 'Pending' ? (
-                              <button type="button" className="ship-btn" onClick={() => markShipped(o.id)}>🚚 Ship</button>
-                            ) : (
-                              <span style={{ fontSize: '11px', color: 'var(--green)' }}>✅ Shipped</span>
-                            )}
-                          </td>
+                        <td>
+  {o.status === 'Pending' ? (
+    <button
+      type="button"
+      className="ship-btn"
+      onClick={() => markShipped(o.id)}
+    >
+      🚚 Ship
+    </button>
+  ) : (
+    <span
+      style={{
+        fontSize: '11px',
+        color: 'var(--green)'
+      }}
+    >
+      ✅ Shipped
+    </span>
+  )}
+
+  <button
+    type="button"
+    className="btn-danger"
+    style={{
+      marginLeft: 6,
+      padding: '4px 10px',
+      fontSize: 12
+    }}
+    onClick={() => handleDeleteOrder(o.id)}
+  >
+    🗑 Delete
+  </button>
+</td>
                         </tr>
                       ))}
                       {!filteredOrders.length && <tr><td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: 'var(--muted)' }}>No orders found</td></tr>}
@@ -1168,7 +1596,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                       style={{ width: '100%', padding: '8px 12px', border: `1px solid ${billErrors.name ? 'var(--red)' : 'var(--border)'}`, borderRadius: '8px', fontSize: '13px', boxSizing:'border-box' }}
                       value={billCustomer.name}
                       onChange={e => { setBillCustomer(p => ({ ...p, name: e.target.value })); setBillErrors(p => ({...p, name:''})); }}
-                      placeholder="e.g. Murugan Kumar"
+                      placeholder="Enter name"
                     />
                     {billErrors.name && <div style={{ color:'var(--red)', fontSize:11, marginTop:3 }}>{billErrors.name}</div>}
                   </div>
@@ -1178,7 +1606,7 @@ export default function AdminDashboard({ onLogout, showToast }) {
                       style={{ width: '100%', padding: '8px 12px', border: `1px solid ${billErrors.phone ? 'var(--red)' : 'var(--border)'}`, borderRadius: '8px', fontSize: '13px', boxSizing:'border-box' }}
                       value={billCustomer.phone}
                       onChange={e => { setBillCustomer(p => ({ ...p, phone: e.target.value })); setBillErrors(p => ({...p, phone:''})); }}
-                      placeholder="9876543210"
+                      placeholder="Enter 10-digit phone"
                       maxLength={10}
                       inputMode="numeric"
                     />
@@ -1272,9 +1700,44 @@ export default function AdminDashboard({ onLogout, showToast }) {
                   );
                 })()}
 
-                <button type="button" className="generate-bill-btn" onClick={handleGenerateBill}>
-                  🧾 Generate Bill
-                </button>
+               <button
+  type="button"
+  className="generate-bill-btn"
+  onClick={handleGenerateBill}
+>
+  {editingBillId
+    ? '💾 Update Bill'
+    : '🧾 Generate Bill'}
+</button>
+
+{editingBillId && (
+  <button
+    type="button"
+    className="btn-ghost"
+    style={{
+      marginTop: 8,
+      width: '100%'
+    }}
+    onClick={() => {
+      setEditingBillId(null);
+      setBillItems([
+        {
+          productId: '',
+          qty: 1,
+        },
+      ]);
+      setBillCustomer({
+        name: '',
+        phone: '',
+        address: '',
+      });
+      setBillDiscount(0);
+      setBillErrors({});
+    }}
+  >
+    Cancel Edit
+  </button>
+)}
               </div>
             </div>
           )}
@@ -1303,7 +1766,45 @@ export default function AdminDashboard({ onLogout, showToast }) {
                         <td>₹{Number(b.tax || 0).toFixed(0)}</td>
                         <td style={{ fontWeight: 700 }}>₹{Number(b.total || 0).toFixed(0)}</td>
                         <td style={{ fontSize: '11px', color: 'var(--muted)' }}>{new Date(b.createdAt).toLocaleDateString('en-IN')}</td>
-                        <td><button type="button" className="filter-btn" onClick={() => setBillPreview(b)}>🔍 View</button></td>
+                        <td>
+  <div
+    style={{
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap'
+    }}
+  >
+    <button
+      type="button"
+      className="filter-btn"
+      onClick={() => setBillPreview(b)}
+    >
+      🔍 View
+    </button>
+
+    <button
+      type="button"
+      className="filter-btn"
+      onClick={() => handleEditBill(b)}
+    >
+      ✏️ Edit
+    </button>
+
+    <button
+      type="button"
+      className="btn-danger"
+      style={{
+        padding: '4px 10px',
+        fontSize: 12
+      }}
+      onClick={() =>
+        handleDeleteBill(b.id)
+      }
+    >
+      🗑
+    </button>
+  </div>
+</td>
                       </tr>
                     ))}
                     {!bills.length && <tr><td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: 'var(--muted)' }}>No bills yet</td></tr>}
@@ -1373,7 +1874,41 @@ export default function AdminDashboard({ onLogout, showToast }) {
                     placeholder="Additional details..."
                   />
                 </div>
-                <button type="button" className="generate-bill-btn" onClick={handleAddExpense}>💾 Save Expense</button>
+               <button
+  type="button"
+  className="generate-bill-btn"
+  onClick={handleAddExpense}
+>
+  {editingExpenseId
+    ? '💾 Update Expense'
+    : '💾 Save Expense'}
+</button>
+
+{editingExpenseId && (
+  <button
+    type="button"
+    className="btn-ghost"
+    style={{
+      marginTop: 8,
+      width: '100%'
+    }}
+    onClick={() => {
+      setEditingExpenseId(null);
+
+      setExpenseForm({
+        title: '',
+        amount: '',
+        category: 'Purchase',
+        note: '',
+        date: '',
+      });
+
+      setExpenseErrors({});
+    }}
+  >
+    Cancel Edit
+  </button>
+)}
               </div>
 
               {/* Expense Summary */}
@@ -1417,7 +1952,38 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           <td style={{ fontWeight:700, color:'var(--red)' }}>₹{Number(e.amount || 0).toFixed(2)}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{new Date(e.date).toLocaleDateString('en-IN')}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{e.note || '—'}</td>
-                          <td><button type="button" className="btn-danger" style={{ padding:'4px 10px', fontSize:12 }} onClick={() => handleDeleteExpense(e.id)}>🗑</button></td>
+                          <td>
+  <div
+    style={{
+      display: 'flex',
+      gap: 6
+    }}
+  >
+    <button
+      type="button"
+      className="filter-btn"
+      style={{
+        padding: '4px 10px',
+        fontSize: 12
+      }}
+      onClick={() => handleEditExpense(e)}
+    >
+      ✏️
+    </button>
+
+    <button
+      type="button"
+      className="btn-danger"
+      style={{
+        padding: '4px 10px',
+        fontSize: 12
+      }}
+      onClick={() => handleDeleteExpense(e.id)}
+    >
+      🗑
+    </button>
+  </div>
+</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1487,9 +2053,45 @@ export default function AdminDashboard({ onLogout, showToast }) {
                     placeholder="Additional details..."
                   />
                 </div>
-                <button type="button" className="generate-bill-btn" style={{ background:'#16a34a', color:'#fff' }} onClick={handleAddIncome}>
-                  💾 Save Income
-                </button>
+               <button
+  type="button"
+  className="generate-bill-btn"
+  style={{
+    background: '#16a34a',
+    color: '#fff'
+  }}
+  onClick={handleAddIncome}
+>
+  {editingIncomeId
+    ? '💾 Update Income'
+    : '💾 Save Income'}
+</button>
+
+{editingIncomeId && (
+  <button
+    type="button"
+    className="btn-ghost"
+    style={{
+      marginTop: 8,
+      width: '100%'
+    }}
+    onClick={() => {
+      setEditingIncomeId(null);
+
+      setIncomeForm({
+        title: '',
+        amount: '',
+        category: 'Sales',
+        note: '',
+        date: '',
+      });
+
+      setIncomeErrors({});
+    }}
+  >
+    Cancel Edit
+  </button>
+)}
               </div>
 
               {/* Income Summary */}
@@ -1609,7 +2211,41 @@ export default function AdminDashboard({ onLogout, showToast }) {
                           <td style={{ fontWeight:700, color:'#0284c7' }}>₹{Number(entry.amount || 0).toFixed(2)}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{new Date(entry.date).toLocaleDateString('en-IN')}</td>
                           <td style={{ fontSize:11, color:'var(--muted)' }}>{entry.note || '—'}</td>
-                          <td><button type="button" className="btn-danger" style={{ padding:'4px 10px', fontSize:12 }} onClick={() => handleDeleteIncome(entry.id)}>🗑</button></td>
+                          <td>
+  <div
+    style={{
+      display: 'flex',
+      gap: 6,
+      alignItems: 'center'
+    }}
+  >
+    <button
+      type="button"
+      className="filter-btn"
+      style={{
+        padding: '4px 10px',
+        fontSize: 12
+      }}
+      onClick={() => handleEditIncome(entry)}
+      title="Edit Income"
+    >
+      ✏️
+    </button>
+
+    <button
+      type="button"
+      className="btn-danger"
+      style={{
+        padding: '4px 10px',
+        fontSize: 12
+      }}
+      onClick={() => handleDeleteIncome(entry.id)}
+      title="Delete Income"
+    >
+      🗑
+    </button>
+  </div>
+</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1618,6 +2254,381 @@ export default function AdminDashboard({ onLogout, showToast }) {
               </div>
             </div>
           )}
+          {/* ── DELETED HISTORY ── */}
+{tab === 'history' && (
+  <div>
+
+    {/* Header */}
+    <div
+      className="admin-table-head"
+      style={{
+        marginBottom: 16,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        flexWrap: 'wrap'
+      }}
+    >
+      <div>
+        <h3 style={{ margin: 0 }}>
+          🕘 Deleted History
+        </h3>
+
+        <div
+          style={{
+            fontSize: 12,
+            color: 'var(--muted)',
+            marginTop: 4
+          }}
+        >
+          All deleted orders, bills, income and expenses
+        </div>
+      </div>
+
+      <div
+        style={{
+          fontWeight: 800,
+          color: 'var(--navy)'
+        }}
+      >
+        {history.length} deleted
+      </div>
+    </div>
+
+    {/* Filters */}
+    <div
+      style={{
+        display: 'flex',
+        gap: 8,
+        flexWrap: 'wrap',
+        marginBottom: 20
+      }}
+    >
+      {[
+        ['all', 'All'],
+        ['order', '📦 Orders'],
+        ['bill', '🧾 Bills'],
+        ['income', '💰 Income'],
+        ['expense', '💸 Expenses'],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          className={`filter-btn ${
+            historyFilter === key
+              ? 'active'
+              : ''
+          }`}
+          onClick={() =>
+            setHistoryFilter(key)
+          }
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+
+    {(() => {
+      const filteredHistory =
+        historyFilter === 'all'
+          ? history
+          : history.filter(
+              item =>
+                item.type === historyFilter
+            );
+
+      const groups = {};
+
+      filteredHistory.forEach(item => {
+        const date =
+          item.deletedAt
+            ? new Date(
+                item.deletedAt
+              ).toLocaleDateString(
+                'en-IN',
+                {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                }
+              )
+            : 'Unknown Date';
+
+        if (!groups[date]) {
+          groups[date] = [];
+        }
+
+        groups[date].push(item);
+      });
+
+      const typeConfig = {
+        order: {
+          icon: '📦',
+          label: 'Order',
+          color: '#2563eb',
+          bg: '#eff6ff',
+        },
+        bill: {
+          icon: '🧾',
+          label: 'Bill',
+          color: '#7c3aed',
+          bg: '#f5f3ff',
+        },
+        income: {
+          icon: '💰',
+          label: 'Income',
+          color: '#0284c7',
+          bg: '#e0f4ff',
+        },
+        expense: {
+          icon: '💸',
+          label: 'Expense',
+          color: '#ea580c',
+          bg: '#fff7ed',
+        },
+      };
+
+      if (!filteredHistory.length) {
+        return (
+          <div
+            className="admin-table-wrap"
+            style={{
+              padding: 50,
+              textAlign: 'center',
+              color: 'var(--muted)'
+            }}
+          >
+            <div
+              style={{
+                fontSize: 42,
+                marginBottom: 10
+              }}
+            >
+              🗂️
+            </div>
+
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 700
+              }}
+            >
+              No deleted records
+            </div>
+
+            <div
+              style={{
+                fontSize: 12,
+                marginTop: 5
+              }}
+            >
+              Deleted items will appear here.
+            </div>
+          </div>
+        );
+      }
+
+      return Object.entries(groups).map(
+        ([date, items]) => (
+          <div
+            key={date}
+            style={{
+              marginBottom: 24
+            }}
+          >
+            {/* Date */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginBottom: 10
+              }}
+            >
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: 'var(--gold)'
+                }}
+              />
+
+              <div
+                style={{
+                  fontWeight: 800,
+                  color: 'var(--navy)',
+                  fontSize: 14
+                }}
+              >
+                {date}
+              </div>
+
+              <div
+                style={{
+                  flex: 1,
+                  height: 1,
+                  background: 'var(--border)'
+                }}
+              />
+            </div>
+
+            {/* Cards */}
+            <div
+              style={{
+                display: 'grid',
+                gap: 10
+              }}
+            >
+              {items.map(item => {
+                const cfg =
+                  typeConfig[item.type] ||
+                  typeConfig.bill;
+
+                const data =
+                  item.originalData || {};
+
+                const title =
+                  item.type === 'order'
+                    ? data.userName ||
+                      item.originalId
+                    : item.type === 'bill'
+                    ? data.customerName ||
+                      item.originalId
+                    : data.title ||
+                      item.originalId;
+
+                const amount =
+                  data.total ??
+                  data.amount ??
+                  0;
+
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: '#fff',
+                      border: '1px solid var(--border)',
+                      borderRadius: 14,
+                      padding: '14px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                      boxShadow:
+                        '0 2px 10px rgba(0,0,0,.04)',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    {/* Icon */}
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        minWidth: 44,
+                        borderRadius: 12,
+                        background: cfg.bg,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 21
+                      }}
+                    >
+                      {cfg.icon}
+                    </div>
+
+                    {/* Main */}
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 180
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 800,
+                            color: cfg.color,
+                            background: cfg.bg,
+                            padding: '3px 8px',
+                            borderRadius: 20
+                          }}
+                        >
+                          {cfg.label}
+                        </span>
+
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: 'var(--muted)'
+                          }}
+                        >
+                          {item.originalId}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 5,
+                          fontWeight: 750,
+                          color: 'var(--navy)'
+                        }}
+                      >
+                        {title}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--muted)',
+                          marginTop: 3
+                        }}
+                      >
+                        Deleted at{' '}
+                        {item.deletedAt
+                          ? new Date(
+                              item.deletedAt
+                            ).toLocaleTimeString(
+                              'en-IN',
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }
+                            )
+                          : '—'}
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div
+                      style={{
+                        fontWeight: 850,
+                        fontSize: 16,
+                        color: cfg.color,
+                        minWidth: 90,
+                        textAlign: 'right'
+                      }}
+                    >
+                      ₹{Number(amount).toFixed(2)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
+      );
+    })()}
+  </div>
+)}
 
           {/* ── PRODUCTS ── */}
           {tab === 'products' && (

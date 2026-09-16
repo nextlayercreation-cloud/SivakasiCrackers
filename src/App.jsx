@@ -372,7 +372,7 @@ const S = {
     width: '100%', padding: '10px 12px', boxSizing: 'border-box',
     border: `1.5px solid ${hasErr ? '#fc8181' : 'rgba(250,199,117,0.3)'}`,
     borderRadius: 8, fontSize: 14,
-    background: 'rgba(255,255,255,0.10)', color: '#fff',
+    background: 'rgba(255,255,255,1)', color: '#000',
     outline: 'none', fontFamily: 'inherit',
   }),
   err: { fontSize: 11, color: '#fc8181', marginTop: 3 },
