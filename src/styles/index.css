@@ -2126,3 +2126,116 @@ tr:hover td{background:#fafaff;}
     height: 16px;
   }
 }
+
+.user-management {
+  padding: 24px;
+}
+
+.user-management-title {
+  margin-bottom: 24px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 24px;
+}
+
+.management-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.management-card h3 {
+  margin-bottom: 18px;
+  color: #222;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.management-input,
+.management-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.management-input:focus,
+.management-select:focus {
+  border-color: #0078ff;
+  box-shadow: 0 0 0 3px rgba(0, 120, 255, 0.15);
+}
+
+.management-input:not(:last-child),
+.management-select:not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.management-btn {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  font-size: 14px;
+}
+
+.management-btn-add {
+  background: #0078ff;
+  color: white;
+}
+
+.management-btn-add:hover {
+  background: #0067dc;
+}
+
+.management-btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.management-btn-delete:hover {
+  background: #bb2d3b;
+}
+
+.management-info {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #666;
+}
+
+.user-count {
+  font-weight: 600;
+  color: #0078ff;
+}
+
+.admin-count {
+  font-weight: 600;
+  color: #28a745;
+}
+
+@media (max-width: 768px) {
+  .management-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .management-card {
+    padding: 18px;
+  }
+}
+
+.management-search {
+  margin-bottom: 16px;
+}

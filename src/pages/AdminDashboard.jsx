@@ -29,7 +29,7 @@ import {
 
 import { getHistory } from '../api/history';
 import { getProducts, addProduct, updateProduct, deleteProduct, addStockToProduct } from '../api/products';
-
+import UserManagement from '../components/UserManagement';
 import { getCollection, addToCollection, updateInCollection, deleteFromCollection } from '../api/collections';
 import { getExtraCategories, saveExtraCategories } from '../api/ui';
 import SelectableSearch from '../components/SelectableSearch';
@@ -52,7 +52,8 @@ const TABS = [
 
   // NEW
   { id: 'history', icon: 'ti-history', label: 'History' },
-
+  {
+  id: 'userManagement',  icon: 'ti-users',  label: 'User Management'},
   { id: 'collections', icon: 'ti-gift', label: 'Collections' },
   { id: 'products', icon: 'ti-tools', label: 'Manage Products' },
 ];
@@ -1992,6 +1993,10 @@ const handleDeleteBill = async (id) => {
               </div>
             </div>
           )}
+
+
+          {/* User Management */}
+          {  tab === 'userManagement' && (  <UserManagement />  )}
 
           {/* ── INCOME HISTORY ── */}
           {tab === 'income' && (
