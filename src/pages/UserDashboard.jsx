@@ -6,7 +6,7 @@ import { getOrders } from '../api/orders';
 import { getNotificationsForUser, markAllNotificationsRead } from '../api/notifications';
 import FireworksCanvas from '../components/FireworksCanvas';
 import Logo from '../components/Logo';
-
+import { getExtraCategories } from '../api/ui';
 const CART_COOKIE = 'sc_cart';
 
 function readCartCookie() {
@@ -56,29 +56,91 @@ const NAV_ITEMS = [
   { key:'contact',  label:'Contact Us' },
   { key:'myorders', label:'My Orders' },
 ];
+const normalizeCategories = (list = []) =>
+  list
+    .map((c, index) => {
+      if (typeof c === 'string') {
+        return {
+          name: c.trim(),
+          order: index + 1,
+        };
+      }
 
-const PRODUCT_CATS = ['All Products','Rockets','Fountains','Flower Pots','Wheels','Bombettes'];
+      if (c && typeof c === 'object') {
+        return {
+          name: String(c.name || '').trim(),
+          order: Number(c.order) || index + 1,
+        };
+      }
+
+      return null;
+    })
+    .filter(c => c && c.name)
+    .sort((a, b) => a.order - b.order);
 
 export default function UserDashboard({ user=null, onLogout, showToast }) {
   const navigate = useNavigate();
-  const [products,   setProducts]   = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [cart,       setCart]       = useState({});
-  const [qty,        setQty]        = useState({});
-  const [section,    setSection]    = useState('home');
-  const [cat,        setCat]        = useState('All Products');
-  const [search,     setSearch]     = useState('');
-  const [cartOpen,   setCartOpen]   = useState(false);
-  const [notifOpen,  setNotifOpen]  = useState(false);
+  const [products,setProducts]   = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading,setLoading]    = useState(true);
+  const [cart,setCart]       = useState({});
+  const [qty,setQty]        = useState({});
+  const [section,setSection]    = useState('home');
+  const [cat,setCat]        = useState('All Products');
+  const [search,setSearch]     = useState('');
+  const [cartOpen,setCartOpen]   = useState(false);
+  const [notifOpen,setNotifOpen]  = useState(false);
   const [collections,setCollections]= useState({ giftbox:[], combo:[], new_arrivals:[], offers:[] });
-  const [notifs,     setNotifs]     = useState([]);
+  const [notifs,setNotifs]     = useState([]);
   const [shipBanner, setShipBanner] = useState(null);
   const [myOrders,   setMyOrders]   = useState([]);
   const [contactForm,setContactForm]= useState({ name:'',phone:'',email:'',subject:'',message:'' });
   const [menuOpen,   setMenuOpen]   = useState(false);
   // track which hamburger nav item is expanded (for sub-category)
   const [drawerExpanded, setDrawerExpanded] = useState(false);
+// ─────────────────────────────────────────────
+// Browser Back / Close Confirmation
+// ─────────────────────────────────────────────
+useEffect(() => {
+  const handleBeforeUnload = (event) => {
+    event.preventDefault();
+    event.returnValue = '';
+  };
 
+  window.addEventListener('beforeunload', handleBeforeUnload);
+
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, []);
+
+useEffect(() => {
+  // Create an extra history entry
+  window.history.pushState({ page: 'dashboard' }, '', window.location.href);
+
+  const handlePopState = () => {
+    const shouldLeave = window.confirm(
+      'Are you sure you want to leave this page?\n\nYour current session may be lost.'
+    );
+
+    if (shouldLeave) {
+      window.history.back();
+    } else {
+      // Stay on current page
+      window.history.pushState(
+        { page: 'dashboard' },
+        '',
+        window.location.href
+      );
+    }
+  };
+
+  window.addEventListener('popstate', handlePopState);
+
+  return () => {
+    window.removeEventListener('popstate', handlePopState);
+  };
+}, []);
   const heroRef = useRef(null);
   useHeroSparkles(heroRef);
 
@@ -103,19 +165,34 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
       setMyOrders(orders.filter((order) => String(order.userId) === String(user.id)));
     } catch {}
   }, [user?.id]);
+const loadProducts = useCallback(async () => {
+  try {
+    setLoading(true);
 
-  const loadProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const p = await getProducts();
-      setProducts(p);
-      const init={};
-      p.forEach(x=>{ init[x.id]=1; });
-      setQty(init);
-    } catch { showToast('Could not load products'); }
-    finally { setLoading(false); }
-  }, [showToast]);
+    const [p, cats] = await Promise.all([
+      getProducts(),
+      getExtraCategories(),
+    ]);
 
+    setProducts(p);
+
+    // Admin Dashboard order is the source of truth
+    setCategories(normalizeCategories(cats));
+
+    const init = {};
+    p.forEach(x => {
+      init[x.id] = 1;
+    });
+
+    setQty(init);
+
+  } catch (err) {
+    console.error('Load products/categories error:', err);
+    showToast('Could not load products');
+  } finally {
+    setLoading(false);
+  }
+}, [showToast]);
   useEffect(() => {
     loadProducts();
     getCollection('giftbox').then(d=>setCollections(p=>({...p,giftbox:d}))).catch(()=>{});
@@ -131,14 +208,27 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
     const t = setInterval(refreshNotifs, 4000);
     return ()=>clearInterval(t);
   }, [refreshNotifs]);
+  const allItems = [
+  ...products,
+  ...collections.giftbox,
+  ...collections.combo,
+  ...collections.new_arrivals,
+  ...collections.offers,
+];
 
-  const allItems = [...products, ...collections.giftbox, ...collections.combo, ...collections.new_arrivals, ...collections.offers];
-  const productCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
-  const productsByCategory = productCategories.map(category => ({
-    category,
-    items: products.filter(p => p.category === category),
+// Admin Dashboard order is used here
+// Admin Dashboard category order = single source of truth
+const productsByCategory = [...categories]
+  .sort((a, b) => Number(a.order) - Number(b.order))
+  .map(category => ({
+    category: category.name,
+    order: Number(category.order),
+    items: products.filter(
+      p =>
+        String(p.category || '').trim().toLowerCase() ===
+        String(category.name || '').trim().toLowerCase()
+    ),
   }));
-
   const saveCart = (c) => {
     setCart(c);
     writeCartCookie(c);
@@ -285,12 +375,12 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
 
   {/* WhatsApp */}
   <a
-    href="https://wa.me/919345635583"
+    href="https://wa.me/919342635583"
     target="_blank"
     rel="noopener noreferrer"
     className="top-social-btn whatsapp-btn"
-    aria-label="WhatsApp +91 93456 35583"
-    title="WhatsApp +91 93456 35583"
+    aria-label="WhatsApp +91 93426 35583"
+    title="WhatsApp +91 93426 35583"
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
@@ -420,17 +510,17 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
                 {/* Sub-categories under All Products */}
                 {item.key==='products'&&drawerExpanded&&(
                   <div style={{background:'rgba(255,255,255,0.04)',borderLeft:'3px solid var(--gold)',marginLeft:16,marginBottom:4}}>
-                    {PRODUCT_CATS.map(c=>(
-                      <div key={c}
-                        onClick={()=>{ setCat(c); setSection('products'); setMenuOpen(false); }}
+                   {categories.map(category => (
+                      <div key={category.name}
+                        onClick={()=>{ setCat(category.name); setSection('products'); setMenuOpen(false); }}
                         style={{
                           padding:'10px 16px',fontSize:13,cursor:'pointer',
-                          color:cat===c?'var(--gold)':'#cfd0e6',
-                          fontWeight:cat===c?700:400,
-                          background:cat===c?'rgba(250,199,117,0.08)':'transparent',
+                          color:cat===category.name?'var(--gold)':'#cfd0e6',
+                          fontWeight:cat===category.name?700:400,
+                          background:cat===category.name?'rgba(250,199,117,0.08)':'transparent',
                           borderBottom:'1px solid rgba(255,255,255,0.05)',
                         }}>
-                        {c}
+                        {category.name}
                       </div>
                     ))}
                   </div>
@@ -474,22 +564,41 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
           </div>
 
           {/* Category Quick Links */}
-          <div className="cat-quick">
-            {[
-              {label:'Rockets',  action:()=>{navTo('products');setCat('Rockets');}},
-              {label:'Fountains',action:()=>{navTo('products');setCat('Fountains');}},
-              {label:'Flower Pots',action:()=>{navTo('products');setCat('Flower Pots');}},
-              {label:'Wheels',   action:()=>{navTo('products');setCat('Wheels');}},
-              {label:'Bombettes',action:()=>{navTo('products');setCat('Bombettes');}},
-              {label:'Gift Boxes',action:()=>navTo('giftbox')},
-              {label:'Combos',   action:()=>navTo('combos')},
-              {label:'Offers',   action:()=>navTo('offers')},
-            ].map(c=>(
-              <div key={c.label} onClick={c.action} style={{textAlign:'center',minWidth:64,cursor:'pointer',flexShrink:0}}>
-                <div style={{fontSize:12,marginTop:4,fontWeight:700,color:'var(--navy)',padding:'8px 12px',background:'#f0f0f8',borderRadius:8,whiteSpace:'nowrap'}}>{c.label}</div>
-              </div>
-            ))}
-          </div>
+         <div className="cat-quick">
+
+  {categories.map(category => (
+    <div
+      key={category.name}
+     onClick={() => {
+  setCat(category.name);
+  setSection('products');
+  setMenuOpen(false);
+}}
+      style={{
+        textAlign: 'center',
+        minWidth: 64,
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 12,
+          marginTop: 4,
+          fontWeight: 700,
+          color: 'var(--navy)',
+          padding: '8px 12px',
+          background: '#f0f0f8',
+          borderRadius: 8,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {category.name}
+      </div>
+    </div>
+  ))}
+
+</div>
 
           <div className="products-section">
             <div className="sec-head">
@@ -499,21 +608,65 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             {loading?<div style={{textAlign:'center',padding:40,color:'var(--muted)'}}>Loading...</div>
             :<div className="products-grid">{products.slice(0,8).map(p=><ProductCard key={p.id} p={p}/>)}</div>}
           </div>
+<div className="products-section">
+  {loading ? (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: 40,
+        color: 'var(--muted)',
+      }}
+    >
+      Loading...
+    </div>
+  ) : (
+    productsByCategory.map(({ category, items }) => (
+      <div
+        key={category}
+        style={{ marginBottom: 22 }}
+      >
+        <div
+          className="sec-head"
+          style={{ marginBottom: 12 }}
+        >
+          <h3 style={{ fontSize: 18 }}>
+            {category}
+          </h3>
 
-          <div className="products-section">
-            {loading ? <div style={{textAlign:'center',padding:40,color:'var(--muted)'}}>Loading...</div> : productsByCategory.map(group => (
-              <div key={group.category} style={{marginBottom:22}}>
-                <div className="sec-head" style={{marginBottom:12}}>
-                  <h3 style={{fontSize:18}}>{group.category}</h3>
-                  <span style={{fontSize:13,color:'var(--muted)'}}>{group.items.length} products</span>
-                </div>
-                <div className="products-grid">
-                  {group.items.map(p => <ProductCard key={p.id} p={p} />)}
-                </div>
-              </div>
+          <span
+            style={{
+              fontSize: 13,
+              color: 'var(--muted)',
+            }}
+          >
+            {items.length} products
+          </span>
+        </div>
+
+        {items.length > 0 ? (
+          <div className="products-grid">
+            {items.map(p => (
+              <ProductCard
+                key={p.id}
+                p={p}
+              />
             ))}
           </div>
-
+        ) : (
+          <div
+            style={{
+              padding: '20px 0',
+              color: 'var(--muted)',
+              fontSize: 14,
+            }}
+          >
+            No products available in this category.
+          </div>
+        )}
+      </div>
+    ))
+  )}
+</div>
           <div className="products-section">
             <div className="sec-head"><h3>🎁 Gift Boxes</h3></div>
             {collections.giftbox.length===0
@@ -560,12 +713,12 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
           <div>
             {/* Mobile category scroll (hidden on desktop, desktop uses the sub-nav above) */}
             <div className="cat-scroll-bar" style={{display:'flex',overflowX:'auto',padding:'8px 12px',gap:8,background:'#fff',borderBottom:'1px solid var(--border)'}}>
-              {PRODUCT_CATS.map(c=>(
-                <button key={c} onClick={()=>setCat(c)} style={{
+              {categories.map(category => (
+                <button key={category.name} onClick={()=>setCat(category.name)} style={{
                   padding:'6px 14px',borderRadius:20,border:'none',cursor:'pointer',flexShrink:0,
-                  background:cat===c?'var(--navy)':'#f0f0f8',color:cat===c?'var(--gold)':'var(--navy)',
+                  background:cat===category.name?'var(--navy)':'#f0f0f8',color:cat===category.name?'var(--gold)':'var(--navy)',
                   fontWeight:700,fontSize:12,whiteSpace:'nowrap'
-                }}>{c}</button>
+                }}>{category.name}</button>
               ))}
             </div>
             <div className="products-section">
@@ -832,11 +985,11 @@ export default function UserDashboard({ user=null, onLogout, showToast }) {
             <span className="contact-label">WHATSAPP</span>
 
             <div className="contact-value">
-              +91 93456 35583
+              +91 93426 35583
             </div>
 
             <a
-              href="https://wa.me/919345635583"
+              href="https://wa.me/919342635583"
               target="_blank"
               rel="noopener noreferrer"
               className="contact-action whatsapp-action"

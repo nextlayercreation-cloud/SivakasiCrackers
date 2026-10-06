@@ -61,8 +61,54 @@ const TABS = [
 // ──────────────────────────────────────────────────────────────────────────────
 // PRODUCT MODAL
 // ──────────────────────────────────────────────────────────────────────────────
-const DEFAULT_CATEGORIES = ['Rockets','Fountains','Flower Pots','Wheels','Bombettes'];
- 
+const DEFAULT_CATEGORIES = [
+  { name: 'Rockets', order: 1 },
+  { name: 'Fountains', order: 2 },
+  { name: 'Flower Pots', order: 3 },
+  { name: 'Wheels', order: 4 },
+  { name: 'Bombettes', order: 5 },
+];
+
+const normalizeCategories = (categories = []) => {
+  return categories
+    .map((category, index) => {
+      if (
+        category &&
+        typeof category === 'object' &&
+        typeof category.name === 'string'
+      ) {
+        const name = category.name.trim();
+
+        return {
+          id:
+            category.id ||
+            `cat_${name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '_')
+              .replace(/^_|_$/g, '')}`,
+          name,
+          order: Number(category.order) || index + 1,
+        };
+      }
+
+      if (typeof category === 'string') {
+        const name = category.trim();
+
+        return {
+          id:
+            `cat_${name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '_')
+              .replace(/^_|_$/g, '')}`,
+          name,
+          order: index + 1,
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+};
 const uploadProductImage = async (file) => {
   if (!file) return '';
 
@@ -93,17 +139,27 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
       : { name: '', category: 'Rockets', price: '', mrp: '', stock: '', lowStockThreshold: '10', desc: '', image: '' }
   );
   const [discount, setDiscount] = useState(String(initDiscount));
-  const [customCats, setCustomCats] = useState(customCategories || []);
-  const [imageFile, setImageFile] = useState(null);
-  const [newCat, setNewCat] = useState('');
-  const [showNewCat, setShowNewCat] = useState(false);
-  const allCategories = [...DEFAULT_CATEGORIES, ...customCats];
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+ const [imageFile, setImageFile] = useState(null);
+const [newCat, setNewCat] = useState('');
+const [showNewCat, setShowNewCat] = useState(false);
+const [newCatOrder, setNewCatOrder] = useState('');
+const [customCats, setCustomCats] = useState(
+  normalizeCategories(customCategories || [])
+);
 
-  useEffect(() => {
-    setCustomCats(customCategories || []);
-  }, [customCategories]);
-
+const set = (key, value) => {
+  setForm(prev => ({
+    ...prev,
+    [key]: value,
+  }));
+};
+useEffect(() => {
+  setCustomCats(
+    normalizeCategories(customCategories || [])
+  );
+}, [customCategories]);
+const allCategories = normalizeCategories(customCategories || [])
+  .sort((a, b) => Number(a.order) - Number(b.order));
   // useEffect(() => {
   //   setImageFile(null);
   // }, [product?.id]);
@@ -148,19 +204,50 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
     setImageFile(file);
     e.target.value = '';
   };
+const addCustomCategory = () => {
+  const cat = newCat.trim();
+  const order = Number(newCatOrder);
 
-  const addCustomCategory = () => {
-    const cat = newCat.trim();
-    if (!cat) return;
-    if (allCategories.map(c=>c.toLowerCase()).includes(cat.toLowerCase())) { showToast('Category already exists'); return; }
-    const updated = [...customCats, cat];
-    setCustomCats(updated);
-    onAddCategory?.(updated);
-    set('category', cat);
-    setNewCat('');
-    setShowNewCat(false);
-    showToast(`Category "${cat}" added!`);
-  };
+  if (!cat) {
+    showToast('Enter category name');
+    return;
+  }
+
+  if (!order || order < 1) {
+    showToast('Enter valid order number');
+    return;
+  }
+const duplicateCategory = allCategories.some(
+  c =>
+    c &&
+    typeof c.name === 'string' &&
+    c.name.trim().toLowerCase() === cat.toLowerCase()
+);
+
+if (duplicateCategory) {
+  showToast('Category already exists');
+  return;
+}
+ const updated = [
+  ...customCats,
+  {
+    id: `cat_${Date.now()}`,
+    name: cat,
+    order: order,
+  },
+];
+
+  setCustomCats(updated);
+  onAddCategory?.(updated);
+
+  set('category', cat);
+
+  setNewCat('');
+  setNewCatOrder('');
+  setShowNewCat(false);
+
+  showToast(`Category "${cat}" added!`);
+};
 
   const handleSave = async () => {
     if (!form.name || !form.price || !form.mrp || !form.stock) { showToast('Fill all required fields'); return; }
@@ -175,7 +262,6 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
       showToast(err?.message || 'Image upload failed');
     }
   };
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -197,30 +283,100 @@ function ProductModal({ product, onClose, onSave, showToast, customCategories, o
         </div>
         <label>Product Name *</label>
         <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Sky Shot Rocket" />
-        <label>Category *</label>
-        <div style={{ display:'flex', gap:8, alignItems:'flex-start', flexWrap:'wrap' }}>
-          <select value={form.category} onChange={e => set('category', e.target.value)} style={{ flex:1, minWidth:140 }}>
-            {allCategories.map(c => <option key={c}>{c}</option>)}
-          </select>
-          <button type="button"
-            onClick={() => setShowNewCat(p => !p)}
-            style={{ background:'var(--navy)', color:'var(--gold)', border:'1.5px solid var(--gold)', borderRadius:8, padding:'7px 13px', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}
-          >+ New Category</button>
+       <label>Category *</label>
+
+<div style={{ display:'flex', gap:8, alignItems:'flex-start', flexWrap:'wrap' }}>
+
+  <div style={{ display:'flex', gap:8, alignItems:'flex-start', flexWrap:'wrap' }}>
+
+    <select
+      value={form.category}
+      onChange={e => set('category', e.target.value)}
+      style={{ flex:1, minWidth:140 }}
+    >
+      {allCategories.map(c => (
+  <option key={c.id} value={c.name}>
+    {c.order}. {c.name}
+  </option>
+))}
+    </select>
+
+  <button
+    type="button"
+    onClick={() => setShowNewCat(p => !p)}
+    style={{
+      background:'var(--navy)',
+      color:'var(--gold)',
+      border:'1.5px solid var(--gold)',
+      borderRadius:8,
+      padding:'7px 13px',
+      fontSize:12,
+      fontWeight:700,
+      cursor:'pointer',
+      whiteSpace:'nowrap'
+    }}
+  >
+    + New Category
+  </button>
+
+
+</div>
         </div>
         {showNewCat && (
           <div style={{ display:'flex', gap:8, marginTop:8 }}>
-            <input
-              value={newCat}
-              onChange={e => setNewCat(e.target.value)}
-              onKeyDown={e => e.key==='Enter' && addCustomCategory()}
-              placeholder="e.g. Sparklers"
-              style={{ flex:1, padding:'7px 12px', border:'1px solid var(--gold)', borderRadius:8, fontSize:13 }}
-              autoFocus
-            />
-            <button type="button" onClick={addCustomCategory}
-              style={{ background:'var(--gold)', color:'#1a0a00', border:'none', borderRadius:8, padding:'7px 16px', fontWeight:800, cursor:'pointer', fontSize:13 }}>
-              Add
-            </button>
+           <div style={{
+  display: 'flex',
+  gap: 8,
+  marginTop: 8,
+  flexWrap: 'wrap'
+}}>
+
+  <input
+    type="number"
+    min="1"
+    value={newCatOrder}
+    onChange={e => setNewCatOrder(e.target.value)}
+    placeholder="Order"
+    style={{
+      width: 100,
+      padding: '7px 12px',
+      border: '1px solid var(--gold)',
+      borderRadius: 8,
+      fontSize: 13
+    }}
+  />
+
+  <input
+    value={newCat}
+    onChange={e => setNewCat(e.target.value)}
+    placeholder="Category name"
+    style={{
+      flex: 1,
+      padding: '7px 12px',
+      border: '1px solid var(--gold)',
+      borderRadius: 8,
+      fontSize: 13
+    }}
+  />
+
+  <button
+    type="button"
+    onClick={addCustomCategory}
+    style={{
+      background: 'var(--gold)',
+      color: '#1a0a00',
+      border: 'none',
+      borderRadius: 8,
+      padding: '7px 16px',
+      fontWeight: 800,
+      cursor: 'pointer'
+    }}
+  >
+    Add
+  </button>
+
+</div>
+          
             <button type="button" onClick={() => { setShowNewCat(false); setNewCat(''); }}
               style={{ background:'transparent', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:8, padding:'7px 12px', cursor:'pointer', fontSize:13 }}>
               Cancel
@@ -570,8 +726,14 @@ const [editingBillId, setEditingBillId] = useState(null);
 const [editingExpenseId, setEditingExpenseId] = useState(null);
 
 const [editingIncomeId, setEditingIncomeId] = useState(null);
-  const [customCategories, setCustomCategories] = useState([]);
+ const [customCategories, setCustomCategories] = useState([]);
 
+const [editingCategory, setEditingCategory] = useState(null);
+const [editedCategoryName, setEditedCategoryName] = useState('');
+const [editedCategoryOrder, setEditedCategoryOrder] = useState('');
+
+const [deletingCategory, setDeletingCategory] = useState(null);
+const [showNewCategory, setShowNewCategory] = useState(false);
   // Billing state
   const [billItems, setBillItems] = useState([{ productId: '', qty: 1 }]);
   const [billCustomer, setBillCustomer] = useState({ name: '', phone: '', address: '' });
@@ -624,15 +786,14 @@ setCollections({
   new_arrivals: na,
   offers: of,
 });
-
-setCustomCategories(cats);
+setCustomCategories(normalizeCategories(cats));
       setOrders(o);
       setProducts(p);
       setBills(b);
       setExpenses(ex);
       setIncomes(inc);
       setCollections({ giftbox: gb, combo: cb, new_arrivals: na, offers: of });
-      setCustomCategories(cats);
+     setCustomCategories(normalizeCategories(cats));
       const gstRes = await fetch(`${API_BASE_URL}/settings/gst`);
       const gstData = await gstRes.json();
       setBillGST(gstData.gstPercentage);
@@ -642,16 +803,129 @@ setCustomCategories(cats);
       setLoading(false);
     }
   }, [showToast]);
+const handleAddCategory = async (categories) => {
+  try {
+    await saveExtraCategories(categories);
+    setCustomCategories(categories);
+  } catch (err) {
+    console.error(err);
+    showToast('Could not save category');
+  }
+};const handleEditCategory = async () => {
+  if (!editingCategory) return;
 
-  const handleAddCategory = async (categories) => {
-    try {
-      await saveExtraCategories(categories);
-      setCustomCategories(categories);
-    } catch {
-      showToast('Could not save category');
-    }
-  };
+  const newName = editedCategoryName.trim();
+  const requestedOrder = Number(editedCategoryOrder);
 
+  if (!newName) {
+    showToast('Enter category name');
+    return;
+  }
+
+  if (
+    !Number.isInteger(requestedOrder) ||
+    requestedOrder < 1 ||
+    requestedOrder > customCategories.length
+  ) {
+    showToast(
+      `Order must be between 1 and ${customCategories.length}`
+    );
+    return;
+  }
+
+  const duplicateName = customCategories.some(
+    c =>
+      c.id !== editingCategory.id &&
+      c.name.trim().toLowerCase() === newName.toLowerCase()
+  );
+
+  if (duplicateName) {
+    showToast('Category already exists');
+    return;
+  }
+
+  // Remove selected category
+  const remaining = customCategories
+    .filter(c => c.id !== editingCategory.id)
+    .sort((a, b) => Number(a.order) - Number(b.order));
+
+  // Insert at requested position
+  remaining.splice(requestedOrder - 1, 0, {
+    ...editingCategory,
+    name: newName,
+  });
+
+  // Re-number safely
+  const finalCategories = remaining.map((category, index) => ({
+    ...category,
+    order: index + 1,
+  }));
+
+  try {
+    await saveExtraCategories(finalCategories);
+
+    setCustomCategories(finalCategories);
+
+    setEditingCategory(null);
+    setEditedCategoryName('');
+    setEditedCategoryOrder('');
+
+    showToast('Category updated successfully!');
+  } catch (err) {
+    console.error('Edit Category Error:', err);
+
+    showToast(
+      err?.message || 'Could not update category'
+    );
+  }
+};const handleDeleteCategory = async () => {
+  if (!deletingCategory) return;
+
+  const categoryName = deletingCategory.name;
+
+  try {
+    const remainingCategories = customCategories
+      .filter(
+        category =>
+          category.id !== deletingCategory.id
+      )
+      .sort(
+        (a, b) =>
+          Number(a.order) - Number(b.order)
+      );
+
+    // Re-number after deletion
+    const finalCategories = remainingCategories.map(
+      (category, index) => ({
+        ...category,
+        order: index + 1,
+      })
+    );
+
+    // Save to backend
+    await saveExtraCategories(finalCategories);
+
+    // Update UI
+    setCustomCategories(finalCategories);
+
+    // Close modal
+    setDeletingCategory(null);
+
+    showToast(
+      `Category "${categoryName}" deleted successfully!`
+    );
+  } catch (err) {
+    console.error(
+      'Delete Category Error:',
+      err
+    );
+
+    showToast(
+      err?.message ||
+        'Could not delete category'
+    );
+  }
+};
   useEffect(() => { reload(); }, [reload]);
 
   // ── ORDERS ─────────────────────────────────────────────────────────────────
@@ -2638,6 +2912,147 @@ const handleDeleteBill = async (id) => {
           {/* ── PRODUCTS ── */}
           {tab === 'products' && (
             <div>
+            {/* ── CATEGORY MANAGEMENT ── */}
+<div className="category-management-card">
+
+  {/* Header */}
+  <div className="category-management-header">
+
+    <div className="category-title-area">
+      <div className="category-icon">
+        🗂️
+      </div>
+
+      <div>
+        <h3>Category Management</h3>
+        <p>
+          Manage category names and display order
+        </p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      className="category-add-btn"
+      onClick={() => {
+        setShowNewCategory(true);
+      }}
+    >
+      <span>＋</span>
+      Add Category
+    </button>
+
+  </div>
+
+
+  {/* Small info bar */}
+  <div className="category-info-bar">
+    <div>
+      <span className="category-info-icon">↕</span>
+      <span>
+        Categories are displayed on the website according to this order.
+      </span>
+    </div>
+
+    <span className="category-count">
+      {customCategories.length} Categories
+    </span>
+  </div>
+
+
+  {/* Category List */}
+  <div className="category-list">
+
+    {customCategories
+      .slice()
+      .sort(
+        (a, b) =>
+          Number(a.order) - Number(b.order)
+      )
+      .map((category, index) => (
+
+        <div
+          key={category.id || category.name}
+          className="category-row"
+        >
+
+          {/* Order */}
+          <div className="category-order">
+            <span>
+              {category.order}
+            </span>
+          </div>
+
+
+          {/* Category name */}
+          <div className="category-name-section">
+
+            <div className="category-name">
+              {category.name}
+            </div>
+
+            <div className="category-subtext">
+              Website category
+            </div>
+
+          </div>
+
+
+          {/* Position */}
+          <div className="category-position">
+
+            <span className="position-label">
+              POSITION
+            </span>
+
+            <span className="position-value">
+              #{category.order}
+            </span>
+
+          </div>
+
+
+          {/* Actions */}
+          <div className="category-actions">
+
+            <button
+              type="button"
+              className="category-edit-btn"
+              onClick={() => {
+                setEditingCategory(category);
+                setEditedCategoryName(
+                  category.name
+                );
+                setEditedCategoryOrder(
+                  String(category.order)
+                );
+              }}
+            >
+              <span>✏️</span>
+              Edit
+            </button>
+
+
+            <button
+              type="button"
+              className="category-delete-btn"
+              onClick={() => {
+                setDeletingCategory(category);
+              }}
+            >
+              <span>🗑️</span>
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+
+      ))}
+
+  </div>
+
+</div>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
                 <h3 style={{ margin:0, fontSize:15, color:'var(--navy)' }}>All Products ({products.length})</h3>
                 <button type="button" className="btn-primary" onClick={() => setProductModal('new')}>+ Add Product</button>
@@ -2972,6 +3387,145 @@ const handleDeleteBill = async (id) => {
           onAddCategory={handleAddCategory}
         />
       )}
+      {editingCategory && (
+  <div className="modal-overlay">
+    <div
+      className="modal-box"
+      onClick={e => e.stopPropagation()}
+      style={{ maxWidth: 430 }}
+    >
+      <h3>Edit Category</h3>
+
+      <label>Category Name</label>
+
+      <input
+        value={editedCategoryName}
+        onChange={e =>
+          setEditedCategoryName(e.target.value)
+        }
+        placeholder="Category name"
+      />
+
+      <label>Order Number</label>
+
+      <input
+        type="number"
+        min="1"
+        value={editedCategoryOrder}
+        onChange={e =>
+          setEditedCategoryOrder(e.target.value)
+        }
+        placeholder="1"
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 10,
+          marginTop: 20,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setEditingCategory(null);
+            setEditedCategoryName('');
+            setEditedCategoryOrder('');
+          }}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleEditCategory}
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{deletingCategory && (
+  <div
+    className="modal-overlay"
+    onClick={() => setDeletingCategory(null)}
+  >
+    <div
+      className="modal-box"
+      onClick={e => e.stopPropagation()}
+      style={{
+        maxWidth: 420,
+        padding: 24,
+      }}
+    >
+      <h3
+        style={{
+          marginTop: 0,
+          color: '#b91c1c',
+        }}
+      >
+        Delete Category?
+      </h3>
+
+      <p style={{ marginBottom: 8 }}>
+        Are you sure you want to delete:
+      </p>
+
+      <strong
+        style={{
+          display: 'block',
+          fontSize: 18,
+          marginBottom: 16,
+        }}
+      >
+        {deletingCategory.name}
+      </strong>
+
+      <p
+        style={{
+          color: '#6b7280',
+          fontSize: 13,
+          marginBottom: 20,
+        }}
+      >
+        This category will be removed from the category list.
+      </p>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setDeletingCategory(null)}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDeleteCategory}
+          style={{
+            background: '#dc2626',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 7,
+            padding: '9px 16px',
+            cursor: 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          Delete Category
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {billPreview && <BillPreview bill={billPreview} onClose={() => setBillPreview(null)} />}
       {orderPreview && <OrderPreview order={orderPreview} onClose={() => setOrderPreview(null)} billGST={billGST} />}
       </div>
